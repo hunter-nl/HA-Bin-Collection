@@ -1,4 +1,4 @@
-"""HA Bin Collection integration setup."""
+"""Bin Collection integration setup."""
 
 from __future__ import annotations
 
@@ -21,7 +21,7 @@ CONFIG_SCHEMA = cv.config_entry_only_config_schema(DOMAIN)
 
 
 async def async_setup_entry(hass: HomeAssistant, entry: BinCollectionConfigEntry) -> bool:
-    """Set up HA Bin Collection from one config entry."""
+    """Set up Bin Collection from one config entry."""
     hass.data.setdefault(DOMAIN, {})
     await _async_register_card_resource(hass)
     coordinator = BinCollectionCoordinator(hass, entry)
@@ -69,7 +69,7 @@ async def _async_update_listener(hass: HomeAssistant, entry: BinCollectionConfig
 
 
 async def async_unload_entry(hass: HomeAssistant, entry: BinCollectionConfigEntry) -> bool:
-    """Unload an HA Bin Collection config entry."""
+    """Unload an Bin Collection config entry."""
     unloaded = await hass.config_entries.async_unload_platforms(entry, PLATFORMS)
     if unloaded:
         runtime = hass.data[DOMAIN].pop(entry.entry_id)

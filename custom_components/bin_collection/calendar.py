@@ -1,4 +1,4 @@
-"""Calendar entity for all HA Bin Collection pickups."""
+"""Calendar entity for all Bin Collection pickups."""
 
 from __future__ import annotations
 

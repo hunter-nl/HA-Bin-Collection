@@ -1,4 +1,4 @@
-"""Config flow for HA Bin Collection."""
+"""Config flow for Bin Collection."""
 
 from __future__ import annotations
 

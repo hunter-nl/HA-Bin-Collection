@@ -1,4 +1,4 @@
-"""Provider implementations for HA Bin Collection."""
+"""Provider implementations for Bin Collection."""
 
 from __future__ import annotations
 

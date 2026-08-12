@@ -25,7 +25,7 @@ This is the Bin Collection integration for Home Assistant.
 - Always use Context7 MCP when you need library/API documentation, code generation, setup, or configuration
  steps without the user explicitly asking
 - Comments: Use sparingly, explain WHY not WHAT
-- Mirror patterns from existing integration modules under `custom_components/ha_bin_collection` and tests under `tests`.
+- Mirror patterns from existing integration modules under `custom_components/bin_collection` and tests under `tests`.
 - Prioritize maintainability, testability, and performance while matching existing simplicity. Follow logging, typing, and retry patterns already used.
 
 ## Architecture & Module Boundaries

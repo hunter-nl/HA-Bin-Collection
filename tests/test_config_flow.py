@@ -3,7 +3,7 @@
 from homeassistant.helpers import config_validation as cv
 from voluptuous_serialize import convert
 
-from custom_components.ha_bin_collection.config_flow import address_schema, normalize_postcode
+from custom_components.bin_collection.config_flow import address_schema, normalize_postcode
 
 
 def test_address_schema_is_serializable() -> None:
