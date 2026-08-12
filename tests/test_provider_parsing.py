@@ -45,14 +45,20 @@ def test_parses_mijnafvalwijzer_nested_response_sections() -> None:
 
 
 def test_filters_expired_mijnafvalwijzer_notices() -> None:
-    """Dated notices expire while undated notices remain available."""
+    """Yesterday's pickup warnings remain while older notices expire."""
     notices = active_notice_items(
         [
-            {"date": "2026-08-10", "message": "Old"},
+            {"date": "2026-08-09", "message": "Old"},
+            {"date": "2026-08-11", "message": "Tomorrow"},
             {"expiration_date": "2026-08-12", "text": "Current"},
+            {"expiration_date": "2026-08-11", "text": "Expired"},
             {"message": "Undated"},
         ],
         date(2026, 8, 12),
     )
 
-    assert notices == [{"expiration_date": "2026-08-12", "text": "Current"}, {"message": "Undated"}]
+    assert notices == [
+        {"date": "2026-08-11", "message": "Tomorrow"},
+        {"expiration_date": "2026-08-12", "text": "Current"},
+        {"message": "Undated"},
+    ]

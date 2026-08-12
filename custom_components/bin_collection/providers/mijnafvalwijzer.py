@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import logging
-from datetime import date
+from datetime import date, timedelta
 from typing import Any
 
 from aiohttp import ClientError, ClientSession, ClientTimeout
@@ -28,18 +28,24 @@ def response_items(response: object) -> list[dict[str, Any]]:
 
 
 def active_notice_items(items: list[dict[str, Any]], today: date) -> list[dict[str, Any]]:
-    """Return notices that have not expired or become stale."""
+    """Return notices that have not expired or aged past the pickup warning window."""
     active: list[dict[str, Any]] = []
     for item in items:
         expiry = item.get("expiration_date")
         published = item.get("date")
-        date_value = expiry or published
-        if date_value:
+        if expiry:
             try:
-                item_date = date.fromisoformat(str(date_value).split(" ", maxsplit=1)[0])
+                expiry_date = date.fromisoformat(str(expiry).split(" ", maxsplit=1)[0])
             except ValueError:
-                item_date = None
-            if item_date is not None and item_date < today:
+                expiry_date = None
+            if expiry_date is not None and expiry_date < today:
+                continue
+        elif published:
+            try:
+                published_date = date.fromisoformat(str(published).split(" ", maxsplit=1)[0])
+            except ValueError:
+                published_date = None
+            if published_date is not None and published_date < today - timedelta(days=1):
                 continue
         active.append(item)
     return active
