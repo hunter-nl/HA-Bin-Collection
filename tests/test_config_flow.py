@@ -3,7 +3,12 @@
 from homeassistant.helpers import config_validation as cv
 from voluptuous_serialize import convert
 
-from custom_components.bin_collection.config_flow import address_schema, config_entry_title, normalize_postcode
+from custom_components.bin_collection.config_flow import (
+    address_schema,
+    config_entry_title,
+    next_device_name,
+    normalize_postcode,
+)
 
 
 def test_address_schema_is_serializable() -> None:
@@ -24,3 +29,10 @@ def test_config_entry_title_identifies_the_provider_and_address() -> None:
         config_entry_title({"provider": "mijnafvalwijzer", "postcode": "3962KE", "house_number": "25", "addition": ""})
         == "MijnAfvalwijzer - 3962KE 25"
     )
+
+
+def test_next_device_name_adds_an_index_for_additional_services() -> None:
+    """Every additional configured service gets a distinct device name."""
+    assert next_device_name(set()) == "Bin Collection"
+    assert next_device_name({"Bin Collection"}) == "Bin Collection 2"
+    assert next_device_name({"Bin Collection", "Bin Collection 2"}) == "Bin Collection 3"

@@ -11,7 +11,7 @@ from homeassistant.helpers.device_registry import DeviceInfo
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
 
-from .const import CANONICAL_WASTE_TYPES, DOMAIN
+from .const import CANONICAL_WASTE_TYPES, CONF_DEVICE_NAME, DEFAULT_DEVICE_NAME, DOMAIN
 from .coordinator import BinCollectionCoordinator
 
 
@@ -33,7 +33,7 @@ class BinCollectionEntity(CoordinatorEntity[BinCollectionCoordinator]):
     def device_info(self) -> DeviceInfo:
         return DeviceInfo(
             identifiers={(DOMAIN, self.coordinator.config_entry.entry_id)},
-            name="Bin Collection",
+            name=self.coordinator.config_entry.data.get(CONF_DEVICE_NAME, DEFAULT_DEVICE_NAME),
             manufacturer="Bin Collection",
         )
 

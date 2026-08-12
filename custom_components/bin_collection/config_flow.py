@@ -12,6 +12,7 @@ from homeassistant.helpers.aiohttp_client import async_get_clientsession
 
 from .const import (
     CONF_ADDITION,
+    CONF_DEVICE_NAME,
     CONF_HOUSE_NUMBER,
     CONF_LOG_LEVEL,
     CONF_POSTCODE,
@@ -19,6 +20,7 @@ from .const import (
     CONF_REMINDER_ENABLED,
     CONF_REMINDER_TIME,
     CONF_SCAN_INTERVAL,
+    DEFAULT_DEVICE_NAME,
     DEFAULT_LOG_LEVEL,
     DEFAULT_REMINDER_ENABLED,
     DEFAULT_REMINDER_TIME,
@@ -46,6 +48,16 @@ def config_entry_title(config: dict[str, str]) -> str:
     return f"{PROVIDER_LABELS[config[CONF_PROVIDER]]} - {identifier}"
 
 
+def next_device_name(existing_names: set[str]) -> str:
+    """Return the next available default device name."""
+    if DEFAULT_DEVICE_NAME not in existing_names:
+        return DEFAULT_DEVICE_NAME
+    index = 2
+    while f"{DEFAULT_DEVICE_NAME} {index}" in existing_names:
+        index += 1
+    return f"{DEFAULT_DEVICE_NAME} {index}"
+
+
 def address_schema(defaults: dict[str, Any] | None = None) -> vol.Schema:
     """Build the provider/address form schema."""
     defaults = defaults or {}
@@ -68,6 +80,14 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
 
     _pending_input: dict[str, Any] | None = None
     _acv_addresses: dict[str, str] | None = None
+
+    def _next_device_name(self) -> str:
+        """Return a unique default name among configured Bin Collection services."""
+        existing_names = {
+            str(entry.data.get(CONF_DEVICE_NAME, DEFAULT_DEVICE_NAME))
+            for entry in self.hass.config_entries.async_entries(DOMAIN)
+        }
+        return next_device_name(existing_names)
 
     async def async_step_user(self, user_input: dict[str, Any] | None = None) -> ConfigFlowResult:
         """Collect and validate the selected provider and address."""
@@ -115,6 +135,7 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                         )
                     )
                     self._abort_if_unique_id_configured()
+                    user_input[CONF_DEVICE_NAME] = self._next_device_name()
                     return self.async_create_entry(title=config_entry_title(user_input), data=user_input)
         return self.async_show_form(step_id="user", data_schema=address_schema(user_input), errors=errors)
 
@@ -138,6 +159,7 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                 )
             )
             self._abort_if_unique_id_configured()
+            config[CONF_DEVICE_NAME] = self._next_device_name()
             return self.async_create_entry(title=config_entry_title(config), data=config)
         return self.async_show_form(
             step_id="acv_address", data_schema=vol.Schema({vol.Required("address_id"): vol.In(self._acv_addresses)})
