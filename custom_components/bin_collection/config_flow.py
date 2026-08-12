@@ -87,6 +87,7 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
 
     _pending_input: dict[str, Any] | None = None
     _acv_addresses: dict[str, str] | None = None
+    _acv_communities: dict[str, str] | None = None
 
     def _next_device_name(self) -> str:
         """Return a unique default name among configured Bin Collection services."""
@@ -114,18 +115,41 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                             async_get_clientsession(self.hass), user_input
                         ).async_get_addresses()
                         choices = {
-                            str(item.get("UniqueAddressID") or item.get("uniqueAddressID")): str(
-                                item.get("Address") or item.get("address") or user_input[CONF_POSTCODE]
-                            )
+                            str(
+                                item.get("UniqueId")
+                                or item.get("uniqueId")
+                                or item.get("UniqueAddressID")
+                                or item.get("uniqueAddressID")
+                            ): str(item.get("Address") or item.get("address") or user_input[CONF_POSTCODE])
                             for item in addresses
-                            if item.get("UniqueAddressID") or item.get("uniqueAddressID")
+                            if item.get("UniqueId")
+                            or item.get("uniqueId")
+                            or item.get("UniqueAddressID")
+                            or item.get("uniqueAddressID")
+                        }
+                        communities = {
+                            str(
+                                item.get("UniqueId")
+                                or item.get("uniqueId")
+                                or item.get("UniqueAddressID")
+                                or item.get("uniqueAddressID")
+                            ): str(item.get("Community") or item.get("community") or "")
+                            for item in addresses
+                            if item.get("UniqueId")
+                            or item.get("uniqueId")
+                            or item.get("UniqueAddressID")
+                            or item.get("uniqueAddressID")
                         }
                         if len(choices) > 1:
                             self._pending_input = user_input
                             self._acv_addresses = choices
+                            self._acv_communities = communities
                             return await self.async_step_acv_address()
                         if choices:
-                            user_input["address_id"] = next(iter(choices))
+                            address_id = next(iter(choices))
+                            user_input["address_id"] = address_id
+                            if community := communities.get(address_id):
+                                user_input["community"] = community
                     provider = get_provider(async_get_clientsession(self.hass), user_input)
                     await provider.async_validate_address()
                 except ProviderError:
@@ -152,6 +176,8 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             return self.async_abort(reason="unknown")
         if user_input is not None:
             config = {**self._pending_input, "address_id": user_input["address_id"]}
+            if community := (self._acv_communities or {}).get(user_input["address_id"]):
+                config["community"] = community
             try:
                 await get_provider(async_get_clientsession(self.hass), config).async_validate_address()
             except ProviderError:
