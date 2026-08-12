@@ -13,9 +13,7 @@ from homeassistant.helpers.update_coordinator import CoordinatorEntity
 
 from .const import (
     CANONICAL_WASTE_TYPES,
-    CONF_CARD_MAX_COLLECTIONS,
     CONF_DEVICE_NAME,
-    DEFAULT_CARD_MAX_COLLECTIONS,
     DEFAULT_DEVICE_NAME,
     DOMAIN,
 )
@@ -84,9 +82,6 @@ class OverviewSensor(BinCollectionEntity, SensorEntity):
         return {
             "entry_id": self.coordinator.config_entry.entry_id,
             "provider": self.coordinator.config_entry.data.get("provider", ""),
-            "card_max_collections": self.coordinator.config_entry.options.get(
-                CONF_CARD_MAX_COLLECTIONS, DEFAULT_CARD_MAX_COLLECTIONS
-            ),
             "collections": [
                 {"date": item.date.isoformat(), "type": item.waste_type, "source_type": item.source_type}
                 for item in sorted(self.coordinator.data.collections, key=lambda item: (item.date, item.waste_type))

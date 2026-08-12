@@ -9,7 +9,7 @@ from typing import Any
 from aiohttp import ClientError, ClientSession, ClientTimeout
 
 from ..models import BinCollectionData
-from .base import ProviderError, collection_from_item, notice_from_item, notice_is_active, redacted_response
+from .base import ProviderError, collection_from_item, notice_from_item, notice_is_active
 
 URL = "https://api.mijnafvalwijzer.nl/webservices/appsinput/"
 API_KEY = "5ef443e778f41c4f75c69459eea6e6ae0c2d92de729aa0fc61653815fbd6a8ca"
@@ -72,9 +72,6 @@ class MijnAfvalwijzerProvider:
             )
         if payload.get("response") == "NOK":
             raise ProviderError(str(payload.get("error") or "Adres niet gevonden"))
-        _LOGGER.debug(
-            "MijnAfvalwijzer raw response (sensitive fields redacted): %s", redacted_response(payload, self._config)
-        )
         return payload
 
     async def async_validate_address(self) -> str:
