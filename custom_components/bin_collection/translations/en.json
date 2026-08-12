@@ -33,7 +33,8 @@
           "scan_interval": "Refresh interval (hours)",
           "reminder_enabled": "Enable collection reminders",
           "reminder_time": "Reminder time (HH:MM:SS)",
-          "log_level": "Integration log level (most verbose setting wins)"
+          "log_level": "Integration log level (most verbose setting wins)",
+          "card_max_collections": "Collections shown on the dashboard card"
         }
       }
     }

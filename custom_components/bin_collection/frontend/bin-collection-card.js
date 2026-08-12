@@ -42,6 +42,13 @@ class BinCollectionCard extends HTMLElement {
     return this._hass.locale?.language || this._hass.language || "en";
   }
 
+  _noticeText(value) {
+    const documentFragment = new DOMParser().parseFromString(value || "", "text/html");
+    documentFragment.querySelectorAll("br").forEach((element) => element.replaceWith("\n"));
+    documentFragment.querySelectorAll("p, div, li").forEach((element) => element.append("\n"));
+    return documentFragment.body.textContent.replace(/\n{3,}/g, "\n\n").trim();
+  }
+
   _bindNoticeActions() {
     this.querySelectorAll("button[data-action]").forEach((button) => {
       button.addEventListener("click", () => {
@@ -67,7 +74,7 @@ class BinCollectionCard extends HTMLElement {
       return;
     }
     const attrs = state.attributes;
-    const collections = (attrs.collections || []).slice(0, 8);
+    const collections = (attrs.collections || []).slice(0, attrs.card_max_collections || 5);
     const notices = [...(attrs.notices || [])].sort((left, right) =>
       (right.published || "").localeCompare(left.published || ""),
     );
@@ -92,7 +99,7 @@ class BinCollectionCard extends HTMLElement {
     const messages = notices.length
       ? `<section class="notices"><h3>Provider messages</h3>${notices.map((notice) => `
           <article class="notice">
-            <div class="notice-copy"><strong>${this._escape(notice.title)}</strong><p>${this._escape(notice.body)}</p></div>
+            <div class="notice-copy"><strong>${this._escape(this._noticeText(notice.title))}</strong><p>${this._escape(this._noticeText(notice.body))}</p></div>
             <div class="notice-actions">
               <button data-action="acknowledge" data-entry-id="${this._escape(attrs.entry_id)}" data-notice-id="${this._escape(notice.notice_id)}" title="Acknowledge notification" aria-label="Acknowledge notification">✓</button>
               <button data-action="delete" data-entry-id="${this._escape(attrs.entry_id)}" data-notice-id="${this._escape(notice.notice_id)}" title="Delete message" aria-label="Delete message">×</button>

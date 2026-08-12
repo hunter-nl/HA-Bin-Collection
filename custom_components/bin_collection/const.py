@@ -4,7 +4,7 @@ from datetime import timedelta
 
 DOMAIN = "bin_collection"
 PLATFORMS = ["sensor", "calendar"]
-CARD_RESOURCE_URL = "/ha_bin_collection/bin-collection-card.js?v=1.0.0-beta.3"
+CARD_RESOURCE_URL = "/ha_bin_collection/bin-collection-card.js?v=1.0.0-beta.4"
 
 PROVIDER_MIJNAFVALWIJZER = "mijnafvalwijzer"
 PROVIDER_ACV = "acv"
@@ -22,12 +22,14 @@ CONF_SCAN_INTERVAL = "scan_interval"
 CONF_REMINDER_ENABLED = "reminder_enabled"
 CONF_REMINDER_TIME = "reminder_time"
 CONF_LOG_LEVEL = "log_level"
+CONF_CARD_MAX_COLLECTIONS = "card_max_collections"
 CONF_DEVICE_NAME = "device_name"
 
 DEFAULT_SCAN_INTERVAL = 6
 DEFAULT_REMINDER_ENABLED = True
 DEFAULT_REMINDER_TIME = "20:00:00"
 DEFAULT_LOG_LEVEL = "INFO"
+DEFAULT_CARD_MAX_COLLECTIONS = 5
 DEFAULT_DEVICE_NAME = "Bin Collection"
 DEFAULT_UPDATE_INTERVAL = timedelta(hours=DEFAULT_SCAN_INTERVAL)
 

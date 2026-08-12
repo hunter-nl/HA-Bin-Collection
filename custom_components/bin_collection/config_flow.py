@@ -13,6 +13,7 @@ from homeassistant.helpers.selector import SelectSelector, SelectSelectorConfig,
 
 from .const import (
     CONF_ADDITION,
+    CONF_CARD_MAX_COLLECTIONS,
     CONF_DEVICE_NAME,
     CONF_HOUSE_NUMBER,
     CONF_LOG_LEVEL,
@@ -21,6 +22,7 @@ from .const import (
     CONF_REMINDER_ENABLED,
     CONF_REMINDER_TIME,
     CONF_SCAN_INTERVAL,
+    DEFAULT_CARD_MAX_COLLECTIONS,
     DEFAULT_DEVICE_NAME,
     DEFAULT_LOG_LEVEL,
     DEFAULT_REMINDER_ENABLED,
@@ -198,6 +200,10 @@ class OptionsFlow(config_entries.OptionsFlow):
                 vol.Required(CONF_LOG_LEVEL, default=options.get(CONF_LOG_LEVEL, DEFAULT_LOG_LEVEL)): vol.In(
                     ["DEBUG", "INFO", "WARNING", "ERROR"]
                 ),
+                vol.Required(
+                    CONF_CARD_MAX_COLLECTIONS,
+                    default=options.get(CONF_CARD_MAX_COLLECTIONS, DEFAULT_CARD_MAX_COLLECTIONS),
+                ): vol.All(vol.Coerce(int), vol.Range(min=1, max=20)),
             }
         )
         return self.async_show_form(step_id="init", data_schema=schema)

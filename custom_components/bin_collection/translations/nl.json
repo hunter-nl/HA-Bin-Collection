@@ -33,7 +33,8 @@
           "scan_interval": "Verversingsinterval (uren)",
           "reminder_enabled": "Inzamelherinneringen inschakelen",
           "reminder_time": "Herinneringstijd (UU:MM:SS)",
-          "log_level": "Logniveau integratie (meest uitgebreide instelling geldt)"
+          "log_level": "Logniveau integratie (meest uitgebreide instelling geldt)",
+          "card_max_collections": "Aantal inzameldagen op de dashboardkaart"
         }
       }
     }

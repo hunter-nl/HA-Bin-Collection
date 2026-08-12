@@ -38,6 +38,8 @@ def test_parses_mijnafvalwijzer_nested_response_sections() -> None:
     """MijnAfvalwijzer wraps collections and messages in response data."""
     assert response_items({"response": "OK", "data": [{"date": "2026-12-24"}]}) == [{"date": "2026-12-24"}]
     assert response_items({"response": "NOK", "data": []}) == []
+    assert response_items({"messages": [{"message": "Newest app message"}]}) == [{"message": "Newest app message"}]
+    assert response_items({"message": "Direct notice"}) == [{"message": "Direct notice"}]
     collection = collection_from_item({"nameType": "pmd", "type": "gkbp", "date": "2026-12-24"})
 
     assert collection is not None

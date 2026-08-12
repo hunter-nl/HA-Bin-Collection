@@ -18,13 +18,15 @@ _LOGGER = logging.getLogger(__name__)
 
 
 def response_items(response: object) -> list[dict[str, Any]]:
-    """Extract list items from a MijnAfvalwijzer response section."""
+    """Extract direct and wrapped list items from a MijnAfvalwijzer response section."""
     if isinstance(response, list):
         return [item for item in response if isinstance(item, dict)]
     if not isinstance(response, dict):
         return []
-    items = response.get("data", [])
-    return [item for item in items if isinstance(item, dict)] if isinstance(items, list) else []
+    for key in ("data", "items", "messages", "notifications", "pushData", "mededelingen", "pushNotifications"):
+        if key in response:
+            return response_items(response[key])
+    return [response]
 
 
 def active_notice_items(items: list[dict[str, Any]], today: date) -> list[dict[str, Any]]:
@@ -87,6 +89,12 @@ class MijnAfvalwijzerProvider:
             for section in (data.get("mededelingen"), data.get("pushData"), data.get("notifications"))
             for item in response_items(section)
         ]
+        _LOGGER.debug(
+            "Received MijnAfvalwijzer notice sections: mededelingen=%d, pushData=%d, notifications=%d",
+            len(response_items(data.get("mededelingen"))),
+            len(response_items(data.get("pushData"))),
+            len(response_items(data.get("notifications"))),
+        )
         collections = tuple(
             collection
             for item in days
