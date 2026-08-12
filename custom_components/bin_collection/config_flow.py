@@ -9,6 +9,7 @@ import voluptuous as vol
 from homeassistant import config_entries
 from homeassistant.config_entries import ConfigFlowResult
 from homeassistant.helpers.aiohttp_client import async_get_clientsession
+from homeassistant.helpers.selector import SelectSelector, SelectSelectorConfig, SelectSelectorMode
 
 from .const import (
     CONF_ADDITION,
@@ -63,8 +64,14 @@ def address_schema(defaults: dict[str, Any] | None = None) -> vol.Schema:
     defaults = defaults or {}
     return vol.Schema(
         {
-            vol.Required(CONF_PROVIDER, default=defaults.get(CONF_PROVIDER, PROVIDER_MIJNAFVALWIJZER)): vol.In(
-                {PROVIDER_MIJNAFVALWIJZER: "MijnAfvalwijzer", PROVIDER_ACV: "ACV"}
+            vol.Required(CONF_PROVIDER, default=defaults.get(CONF_PROVIDER, PROVIDER_MIJNAFVALWIJZER)): SelectSelector(
+                SelectSelectorConfig(
+                    options=[
+                        {"value": PROVIDER_MIJNAFVALWIJZER, "label": "MijnAfvalwijzer"},
+                        {"value": PROVIDER_ACV, "label": "ACV"},
+                    ],
+                    mode=SelectSelectorMode.DROPDOWN,
+                )
             ),
             vol.Required(CONF_POSTCODE, default=defaults.get(CONF_POSTCODE, "")): str,
             vol.Required(CONF_HOUSE_NUMBER, default=defaults.get(CONF_HOUSE_NUMBER, "")): str,
