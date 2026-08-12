@@ -31,9 +31,16 @@
         "title": "Bin Collection opties",
         "data": {
           "scan_interval": "Verversingsinterval (uren)",
-          "reminder_enabled": "Inzamelherinneringen inschakelen",
-          "reminder_time": "Herinneringstijd (UU:MM:SS)",
-          "log_level": "Logniveau integratie (meest uitgebreide instelling geldt)"
+          "log_level": "Logniveau integratie (meest uitgebreide instelling geldt)",
+          "card_max_collections": "Standaardaantal inzameldagen op de dashboardkaart",
+          "reminder_rest_enabled": "Herinnering restafval (dag vóór inzameling)",
+          "reminder_rest_time": "Tijd herinnering restafval (dag vóór, UU:MM:SS)",
+          "reminder_paper_enabled": "Herinnering papier (dag vóór inzameling)",
+          "reminder_paper_time": "Tijd herinnering papier (dag vóór, UU:MM:SS)",
+          "reminder_gft_enabled": "Herinnering GFT (dag vóór inzameling)",
+          "reminder_gft_time": "Tijd herinnering GFT (dag vóór, UU:MM:SS)",
+          "reminder_pmd_enabled": "Herinnering PMD (dag vóór inzameling)",
+          "reminder_pmd_time": "Tijd herinnering PMD (dag vóór, UU:MM:SS)"
         }
       }
     }

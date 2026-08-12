@@ -20,7 +20,6 @@ from .const import (
     DEFAULT_LOG_LEVEL,
     DOMAIN,
     PLATFORMS,
-    SERVICE_ACKNOWLEDGE_NOTICE,
     SERVICE_DELETE_NOTICE,
 )
 from .coordinator import BinCollectionCoordinator
@@ -79,25 +78,11 @@ async def async_setup(hass: HomeAssistant, config: dict) -> bool:
     )
     hass.services.async_register(
         DOMAIN,
-        SERVICE_ACKNOWLEDGE_NOTICE,
-        _async_acknowledge_notice,
-        schema=vol.Schema({vol.Required("entry_id"): cv.string, vol.Required("notice_id"): cv.string}),
-    )
-    hass.services.async_register(
-        DOMAIN,
         SERVICE_DELETE_NOTICE,
         _async_delete_notice,
         schema=vol.Schema({vol.Required("entry_id"): cv.string, vol.Required("notice_id"): cv.string}),
     )
     return True
-
-
-async def _async_acknowledge_notice(call: ServiceCall) -> None:
-    """Acknowledge a collector notice from the custom dashboard card."""
-    entry_id = call.data["entry_id"]
-    delivery = call.hass.data.get(DOMAIN, {}).get(entry_id, {}).get("delivery")
-    if delivery is not None:
-        await delivery.async_acknowledge_notice(call.data["notice_id"])
 
 
 async def _async_delete_notice(call: ServiceCall) -> None:

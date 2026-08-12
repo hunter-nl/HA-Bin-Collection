@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from datetime import date, datetime
+from json import dumps
 from typing import Any
 
 from ..models import Collection, Notice
@@ -28,6 +29,41 @@ CATEGORY_ALIASES = {
     "plastic verpakkingen": "pmd",
     "plastic metal drinkkartons": "pmd",
 }
+
+_SENSITIVE_KEY_PARTS = (
+    "address",
+    "apikey",
+    "api_key",
+    "authorization",
+    "email",
+    "house",
+    "password",
+    "postcode",
+    "post_code",
+    "secret",
+    "street",
+    "token",
+)
+
+
+def redacted_response(payload: object, configured_values: dict[str, str]) -> str:
+    """Serialize a provider payload for DEBUG logging without household secrets."""
+    sensitive_values = {str(value) for value in configured_values.values() if value}
+
+    def redact(value: object, key: str = "") -> object:
+        normalized_key = key.lower().replace("-", "_")
+        if any(part in normalized_key for part in _SENSITIVE_KEY_PARTS):
+            return "***"
+        if isinstance(value, dict):
+            return {str(child_key): redact(child_value, str(child_key)) for child_key, child_value in value.items()}
+        if isinstance(value, list):
+            return [redact(item) for item in value]
+        if isinstance(value, str):
+            for sensitive_value in sensitive_values:
+                value = value.replace(sensitive_value, "***")
+        return value
+
+    return dumps(redact(payload), ensure_ascii=False, sort_keys=True, default=str)
 
 
 def normalize_waste_type(value: object) -> str:

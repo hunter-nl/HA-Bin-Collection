@@ -1,20 +1,3 @@
-acknowledge_notice:
-  name: Acknowledge provider notice
-  description: Acknowledge a provider notice and dismiss its persistent notification without removing the message from the Bin Collection card.
-  fields:
-    entry_id:
-      name: Configuration entry ID
-      description: The ID of the Bin Collection configuration entry that owns the notice.
-      required: true
-      selector:
-        text:
-    notice_id:
-      name: Notice ID
-      description: The notice identifier exposed by the Bin Collection overview sensor.
-      required: true
-      selector:
-        text:
-
 delete_notice:
   name: Delete provider notice from card
   description: Locally hide a provider notice from the Bin Collection card and dismiss its persistent notification. The provider data is not changed.

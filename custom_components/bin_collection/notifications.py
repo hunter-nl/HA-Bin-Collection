@@ -12,6 +12,7 @@ from homeassistant.helpers.event import async_track_time_change
 from homeassistant.helpers.storage import Store
 
 from .const import (
+    CANONICAL_WASTE_TYPES,
     CONF_REMINDER_ENABLED,
     CONF_REMINDER_TIME,
     DEFAULT_REMINDER_ENABLED,
@@ -19,6 +20,8 @@ from .const import (
     DOMAIN,
     EVENT_COLLECTION_REMINDER,
     EVENT_PROVIDER_NOTICE,
+    reminder_enabled_key,
+    reminder_time_key,
 )
 from .coordinator import BinCollectionCoordinator
 from .models import BinCollectionData, Notice
@@ -33,7 +36,6 @@ class DeliveryManager:
         self.coordinator = coordinator
         self._store = Store[dict[str, list[str]]](hass, 1, f"{DOMAIN}.{entry.entry_id}.delivery")
         self._notified: set[str] = set()
-        self._acknowledged: set[str] = set()
         self._deleted: set[str] = set()
         self._reminded: set[str] = set()
         self._unsub_time = None
@@ -41,7 +43,6 @@ class DeliveryManager:
     async def async_load(self) -> None:
         data = await self._store.async_load() or {}
         self._notified = set(data.get("notified", []))
-        self._acknowledged = set(data.get("acknowledged", []))
         self._deleted = set(data.get("deleted", []))
         self._reminded = set(data.get("reminded", []))
 
@@ -49,7 +50,6 @@ class DeliveryManager:
         await self._store.async_save(
             {
                 "notified": sorted(self._notified)[-500:],
-                "acknowledged": sorted(self._acknowledged)[-500:],
                 "deleted": sorted(self._deleted)[-500:],
                 "reminded": sorted(self._reminded)[-500:],
             }
@@ -59,18 +59,9 @@ class DeliveryManager:
         """Return whether a notice was locally removed from the dashboard card."""
         return self._notice_fingerprint(notice) in self._deleted
 
-    async def async_acknowledge_notice(self, fingerprint: str) -> None:
-        """Record acknowledgement and dismiss its persistent notification."""
-        self._acknowledged.add(fingerprint)
-        self._notified.add(fingerprint)
-        await self._async_save()
-        await self._async_dismiss_notification(fingerprint)
-        self.coordinator.async_update_listeners()
-
     async def async_delete_notice(self, fingerprint: str) -> None:
         """Locally hide a provider notice without changing provider data."""
         self._deleted.add(fingerprint)
-        self._acknowledged.add(fingerprint)
         self._notified.add(fingerprint)
         await self._async_save()
         await self._async_dismiss_notification(fingerprint)
@@ -87,17 +78,28 @@ class DeliveryManager:
 
     def async_schedule(self) -> None:
         if self._unsub_time:
-            self._unsub_time()
+            for unsubscribe in self._unsub_time:
+                unsubscribe()
         if not self.entry.options.get(CONF_REMINDER_ENABLED, DEFAULT_REMINDER_ENABLED):
             return
-        reminder_time = time.fromisoformat(self.entry.options.get(CONF_REMINDER_TIME, DEFAULT_REMINDER_TIME))
-        self._unsub_time = async_track_time_change(
-            self.hass, self._async_remind, hour=reminder_time.hour, minute=reminder_time.minute, second=0
-        )
+        reminder_times = {
+            time.fromisoformat(
+                self.entry.options.get(
+                    reminder_time_key(waste_type), self.entry.options.get(CONF_REMINDER_TIME, DEFAULT_REMINDER_TIME)
+                )
+            )
+            for waste_type in CANONICAL_WASTE_TYPES
+            if self.entry.options.get(reminder_enabled_key(waste_type), True)
+        }
+        self._unsub_time = [
+            async_track_time_change(self.hass, self._async_remind, hour=value.hour, minute=value.minute, second=0)
+            for value in reminder_times
+        ]
 
     async def async_unload(self) -> None:
         if self._unsub_time:
-            self._unsub_time()
+            for unsubscribe in self._unsub_time:
+                unsubscribe()
             self._unsub_time = None
 
     def async_handle_update(self) -> None:
@@ -108,13 +110,13 @@ class DeliveryManager:
             return
         active = {self._notice_fingerprint(notice) for notice in data.notices}
         changed = False
-        for state in (self._notified, self._acknowledged, self._deleted):
+        for state in (self._notified, self._deleted):
             before = len(state)
             state.intersection_update(active)
             changed |= len(state) != before
         for notice in data.notices:
             fingerprint = self._notice_fingerprint(notice)
-            if fingerprint in self._notified or fingerprint in self._acknowledged:
+            if fingerprint in self._notified:
                 continue
             notification_id = f"{DOMAIN}_{self.entry.entry_id}_notice_{fingerprint[:10]}"
             persistent_notification.async_create(self.hass, notice.body, notice.title, notification_id)
@@ -132,7 +134,21 @@ class DeliveryManager:
         if data is None:
             return
         target = (now + timedelta(days=1)).date()
-        waste_types = sorted({item.waste_type for item in data.collections if item.date == target})
+        waste_types = sorted(
+            {
+                item.waste_type
+                for item in data.collections
+                if item.date == target
+                and self.entry.options.get(reminder_enabled_key(item.waste_type), True)
+                and time.fromisoformat(
+                    self.entry.options.get(
+                        reminder_time_key(item.waste_type),
+                        self.entry.options.get(CONF_REMINDER_TIME, DEFAULT_REMINDER_TIME),
+                    )
+                )
+                == now.time().replace(second=0, microsecond=0)
+            }
+        )
         if not waste_types:
             return
         fingerprint = self._fingerprint("reminder", target.isoformat(), ",".join(waste_types))
