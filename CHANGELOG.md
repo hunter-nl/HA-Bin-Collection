@@ -4,6 +4,29 @@ If you find this project useful, consider supporting its development:
 <a href="https://www.buymeacoffee.com/hunter.nl" target="_blank"><img src="https://cdn.buymeacoffee.com/buttons/v2/default-yellow.png" alt="Buy Me A Coffee" style="height: 60px !important;width: 217px !important;"></a>
 
 # Changelog
+## [v1.0.0-beta.5](https://github.com/hunter-nl/HA-Bin-Collection/releases/tag/v1.0.0-beta.5)
+
+
+
+
+
+
+### 🐛 Fixes
+
+- [Fix: use current ACV Ximmio API](https://github.com/hunter-nl/HA-Bin-Collection/pull/21) ([#21](https://github.com/hunter-nl/HA-Bin-Collection/pull/21))
+
+- [Fix: localize card labels](https://github.com/hunter-nl/HA-Bin-Collection/pull/18) ([#18](https://github.com/hunter-nl/HA-Bin-Collection/pull/18))
+
+- [Fix: localize calendar event labels](https://github.com/hunter-nl/HA-Bin-Collection/pull/19) ([#19](https://github.com/hunter-nl/HA-Bin-Collection/pull/19))
+
+- [Fix: move provider diagnostics out of logs](https://github.com/hunter-nl/HA-Bin-Collection/pull/20) ([#20](https://github.com/hunter-nl/HA-Bin-Collection/pull/20))
+
+
+
+
+
+
+
 ## [v1.0.0-beta.4](https://github.com/hunter-nl/HA-Bin-Collection/releases/tag/v1.0.0-beta.4)
 
 
