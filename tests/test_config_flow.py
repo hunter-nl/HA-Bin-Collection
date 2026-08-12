@@ -1,0 +1,18 @@
+"""Tests for the configuration flow."""
+
+from homeassistant.helpers import config_validation as cv
+from voluptuous_serialize import convert
+
+from custom_components.ha_bin_collection.config_flow import address_schema, normalize_postcode
+
+
+def test_address_schema_is_serializable() -> None:
+    """The frontend receives a serializable configuration schema."""
+    schema = convert(address_schema(), custom_serializer=cv.custom_serializer)
+
+    assert len(schema) == 4
+
+
+def test_normalize_postcode_accepts_common_input() -> None:
+    """Postcodes are stored in the provider-friendly format."""
+    assert normalize_postcode("1234 ab") == "1234AB"

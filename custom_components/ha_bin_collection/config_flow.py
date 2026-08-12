@@ -45,10 +45,8 @@ def address_schema(defaults: dict[str, Any] | None = None) -> vol.Schema:
             vol.Required(CONF_PROVIDER, default=defaults.get(CONF_PROVIDER, PROVIDER_MIJNAFVALWIJZER)): vol.In(
                 {PROVIDER_MIJNAFVALWIJZER: "MijnAfvalwijzer", PROVIDER_ACV: "ACV"}
             ),
-            vol.Required(CONF_POSTCODE, default=defaults.get(CONF_POSTCODE, "")): normalize_postcode,
-            vol.Required(CONF_HOUSE_NUMBER, default=defaults.get(CONF_HOUSE_NUMBER, "")): vol.All(
-                str, vol.Match(r"^\d+$")
-            ),
+            vol.Required(CONF_POSTCODE, default=defaults.get(CONF_POSTCODE, "")): str,
+            vol.Required(CONF_HOUSE_NUMBER, default=defaults.get(CONF_HOUSE_NUMBER, "")): str,
             vol.Optional(CONF_ADDITION, default=defaults.get(CONF_ADDITION, "")): str,
         }
     )
@@ -68,38 +66,47 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         if user_input is not None:
             user_input[CONF_ADDITION] = user_input.get(CONF_ADDITION, "").strip().upper()
             try:
-                if user_input[CONF_PROVIDER] == PROVIDER_ACV:
-                    addresses = await AcvProvider(async_get_clientsession(self.hass), user_input).async_get_addresses()
-                    choices = {
-                        str(item.get("UniqueAddressID") or item.get("uniqueAddressID")): str(
-                            item.get("Address") or item.get("address") or user_input[CONF_POSTCODE]
-                        )
-                        for item in addresses
-                        if item.get("UniqueAddressID") or item.get("uniqueAddressID")
-                    }
-                    if len(choices) > 1:
-                        self._pending_input = user_input
-                        self._acv_addresses = choices
-                        return await self.async_step_acv_address()
-                    if choices:
-                        user_input["address_id"] = next(iter(choices))
-                provider = get_provider(async_get_clientsession(self.hass), user_input)
-                title = await provider.async_validate_address()
-            except ProviderError:
-                errors["base"] = "cannot_connect"
-            else:
-                await self.async_set_unique_id(
-                    "_".join(
-                        (
-                            user_input[CONF_PROVIDER],
-                            user_input[CONF_POSTCODE],
-                            user_input[CONF_HOUSE_NUMBER],
-                            user_input[CONF_ADDITION],
+                user_input[CONF_POSTCODE] = normalize_postcode(user_input[CONF_POSTCODE])
+            except vol.Invalid:
+                errors[CONF_POSTCODE] = "invalid_postcode"
+            if not re.fullmatch(r"\d+", user_input[CONF_HOUSE_NUMBER]):
+                errors[CONF_HOUSE_NUMBER] = "invalid_house_number"
+            if not errors:
+                try:
+                    if user_input[CONF_PROVIDER] == PROVIDER_ACV:
+                        addresses = await AcvProvider(
+                            async_get_clientsession(self.hass), user_input
+                        ).async_get_addresses()
+                        choices = {
+                            str(item.get("UniqueAddressID") or item.get("uniqueAddressID")): str(
+                                item.get("Address") or item.get("address") or user_input[CONF_POSTCODE]
+                            )
+                            for item in addresses
+                            if item.get("UniqueAddressID") or item.get("uniqueAddressID")
+                        }
+                        if len(choices) > 1:
+                            self._pending_input = user_input
+                            self._acv_addresses = choices
+                            return await self.async_step_acv_address()
+                        if choices:
+                            user_input["address_id"] = next(iter(choices))
+                    provider = get_provider(async_get_clientsession(self.hass), user_input)
+                    title = await provider.async_validate_address()
+                except ProviderError:
+                    errors["base"] = "cannot_connect"
+                else:
+                    await self.async_set_unique_id(
+                        "_".join(
+                            (
+                                user_input[CONF_PROVIDER],
+                                user_input[CONF_POSTCODE],
+                                user_input[CONF_HOUSE_NUMBER],
+                                user_input[CONF_ADDITION],
+                            )
                         )
                     )
-                )
-                self._abort_if_unique_id_configured()
-                return self.async_create_entry(title=title, data=user_input)
+                    self._abort_if_unique_id_configured()
+                    return self.async_create_entry(title=title, data=user_input)
         return self.async_show_form(step_id="user", data_schema=address_schema(user_input), errors=errors)
 
     async def async_step_acv_address(self, user_input: dict[str, Any] | None = None) -> ConfigFlowResult:
