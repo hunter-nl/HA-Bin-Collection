@@ -4,6 +4,31 @@ If you find this project useful, consider supporting its development:
 <a href="https://www.buymeacoffee.com/hunter.nl" target="_blank"><img src="https://cdn.buymeacoffee.com/buttons/v2/default-yellow.png" alt="Buy Me A Coffee" style="height: 60px !important;width: 217px !important;"></a>
 
 # Changelog
+## [v1.0.0-beta.3](https://github.com/hunter-nl/HA-Bin-Collection/releases/tag/v1.0.0-beta.3)
+
+
+
+### ✨ Features
+
+- [Feat: add dashboard collection card](https://github.com/hunter-nl/HA-Bin-Collection/pull/14) ([#14](https://github.com/hunter-nl/HA-Bin-Collection/pull/14))
+
+
+
+
+
+
+
+
+### 🐛 Fixes
+
+- [Fix: retain recent pickup notices](https://github.com/hunter-nl/HA-Bin-Collection/pull/13) ([#13](https://github.com/hunter-nl/HA-Bin-Collection/pull/13))
+
+
+
+
+
+
+
 ## [v1.0.0-beta.2](https://github.com/hunter-nl/HA-Bin-Collection/releases/tag/v1.0.0-beta.2)
 
 
