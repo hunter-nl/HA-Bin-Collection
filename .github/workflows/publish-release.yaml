@@ -9,7 +9,7 @@ permissions:
   contents: write
 
 env:
-  COMPONENT_NAME: ${{ vars.COMPONENT_NAME }}
+  COMPONENT_NAME: bin_collection
 
 jobs:
   publish:
