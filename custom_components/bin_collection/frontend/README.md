@@ -14,4 +14,4 @@ resources:
 ```
 
 The card uses the paired `Kliko_*_brand.png` assets: the matching
-waste-stream symbol is overlaid as a small badge on the right side of the bin.
+waste-stream symbol is overlaid as a small outlined label inside the bin body.
