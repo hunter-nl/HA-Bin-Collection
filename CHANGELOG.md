@@ -4,6 +4,24 @@ If you find this project useful, consider supporting its development:
 <a href="https://www.buymeacoffee.com/hunter.nl" target="_blank"><img src="https://cdn.buymeacoffee.com/buttons/v2/default-yellow.png" alt="Buy Me A Coffee" style="height: 60px !important;width: 217px !important;"></a>
 
 # Changelog
+## [v1.0.0-beta.2](https://github.com/hunter-nl/HA-Bin-Collection/releases/tag/v1.0.0-beta.2)
+
+
+
+### 🐛 Fixes
+
+- [Fix: address beta review findings](https://github.com/hunter-nl/HA-Bin-Collection/pull/11) ([#11](https://github.com/hunter-nl/HA-Bin-Collection/pull/11))
+
+- [Fix: log collection fetches and parse provider data](https://github.com/hunter-nl/HA-Bin-Collection/pull/10) ([#10](https://github.com/hunter-nl/HA-Bin-Collection/pull/10))
+
+- [Fix: show providers in a dropdown](https://github.com/hunter-nl/HA-Bin-Collection/pull/9) ([#9](https://github.com/hunter-nl/HA-Bin-Collection/pull/9))
+
+
+
+
+
+
+
 ## [v1.0.0-beta.1](https://github.com/hunter-nl/HA-Bin-Collection/releases/tag/v1.0.0-beta.1)
 
 
