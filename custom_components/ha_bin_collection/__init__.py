@@ -9,12 +9,15 @@ from homeassistant.components.http import StaticPathConfig
 from homeassistant.components.lovelace.const import CONF_RESOURCE_TYPE_WS, LOVELACE_DATA
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
+from homeassistant.helpers import config_validation as cv
 
 from .const import CARD_RESOURCE_URL, DOMAIN, PLATFORMS
 from .coordinator import BinCollectionCoordinator
 from .notifications import DeliveryManager
 
 type BinCollectionConfigEntry = ConfigEntry[BinCollectionCoordinator]
+
+CONFIG_SCHEMA = cv.config_entry_only_config_schema(DOMAIN)
 
 
 async def async_setup_entry(hass: HomeAssistant, entry: BinCollectionConfigEntry) -> bool:

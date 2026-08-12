@@ -22,7 +22,7 @@
 [hacs-badge]: https://img.shields.io/badge/HACS-Custom-41BDF5?logo=homeassistantcommunitystore&logoColor=white
 [hacs-url]: https://www.hacs.xyz/docs/faq/custom_repositories/
 
-HA Bin Collection is a Home Assistant custom integration for Dutch waste collection calendars. Version `0.0.1-alpha` supports **MijnAfvalwijzer** and **ACV** (Ximmio), with a provider design intended for further collectors.
+HA Bin Collection is a Home Assistant custom integration for Dutch waste collection calendars. Current version supports **MijnAfvalwijzer** and **ACV** (Ximmio), with a provider design intended for further other collectors.
 
 It gives every configured address its own collection calendar, consistent Rest/Papier/GFT/PMD date sensors, provider notices, day-before reminders, and a compact Lovelace card.
 
