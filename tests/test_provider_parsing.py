@@ -48,15 +48,18 @@ def test_filters_only_explicitly_expired_mijnafvalwijzer_notices() -> None:
     """Published dates do not remove a message; explicit expiry does."""
     notices = active_notice_items(
         [
-            {"date": "2026-08-10", "message": "Old"},
+            {"date": "2026-08-09", "message": "Old"},
+            {"date": "2026-08-11", "message": "Yesterday"},
             {"expiration_date": "2026-08-12", "text": "Current"},
+            {"expiration_date": "2026-08-11", "text": "Expired"},
             {"message": "Undated"},
         ],
         date(2026, 8, 12),
     )
 
     assert notices == [
-        {"date": "2026-08-10", "message": "Old"},
+        {"date": "2026-08-09", "message": "Old"},
+        {"date": "2026-08-11", "message": "Yesterday"},
         {"expiration_date": "2026-08-12", "text": "Current"},
         {"message": "Undated"},
     ]
