@@ -65,6 +65,10 @@ jobs:
         run: |
           sed -i "s/^version = .*/version = \"$VERSION\"/" ${{ github.workspace }}/pyproject.toml
 
+      - name: Update card resource version
+        run: |
+          sed -i "s|bin-collection-card.js?v=.*\"|bin-collection-card.js?v=$VERSION\"|" "custom_components/${{ env.COMPONENT_NAME }}/const.py"
+
       - name: Generate changelog
         uses: orhun/git-cliff-action@v4
         with:
@@ -99,6 +103,7 @@ jobs:
             custom_components/${{ env.COMPONENT_NAME }}/manifest.json
             package.json
             pyproject.toml
+            custom_components/${{ env.COMPONENT_NAME }}/const.py
             CHANGELOG.md
 
       - name: Enable release pull request auto-merge

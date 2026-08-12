@@ -189,9 +189,10 @@ class BinCollectionCardEditor extends HTMLElement {
       const maxCollections = Number(this.querySelector("#max").value) || 5;
       this.dispatchEvent(new CustomEvent("config-changed", { detail: { config: { ...this.config, entity, max_collections: maxCollections } }, bubbles: true, composed: true }));
     };
+    // Updating on every keystroke makes Home Assistant immediately call
+    // setConfig(), which replaces the editor and restores the old value.
     this.querySelectorAll("select,input").forEach((element) => {
       element.addEventListener("change", updateConfig);
-      element.addEventListener("input", updateConfig);
     });
   }
 }
