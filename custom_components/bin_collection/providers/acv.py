@@ -10,7 +10,7 @@ from aiohttp import ClientError, ClientSession, ClientTimeout
 
 from ..const import ACV_COMPANY_CODE
 from ..models import BinCollectionData
-from .base import ProviderError, collection_from_item, notice_from_item
+from .base import ProviderError, collection_from_item, notice_from_item, notice_is_active
 
 BASE_URL = "https://api.ximmio.com/api"
 
@@ -84,7 +84,16 @@ class AcvProvider:
         items = data.get("items", data.get("calendar", data.get("dataList", []))) if isinstance(data, dict) else data
         messages = data.get("notifications", data.get("messages", [])) if isinstance(data, dict) else []
         collections = tuple(filter(None, (collection_from_item(item) for item in items if isinstance(item, dict))))
-        notices = tuple(filter(None, (notice_from_item(item) for item in messages if isinstance(item, dict))))
+        notices = tuple(
+            filter(
+                None,
+                (
+                    notice_from_item(item)
+                    for item in messages
+                    if isinstance(item, dict) and notice_is_active(item, date.today())
+                ),
+            )
+        )
         _LOGGER.debug(
             "Received ACV calendar response with %d items and %d messages",
             len(items) if isinstance(items, list) else 0,

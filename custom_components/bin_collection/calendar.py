@@ -10,7 +10,7 @@ from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
 
-from .const import DOMAIN
+from .const import DOMAIN, PROVIDER_LABELS
 from .coordinator import BinCollectionCoordinator
 
 
@@ -25,6 +25,11 @@ class BinCollectionCalendar(CoordinatorEntity[BinCollectionCoordinator], Calenda
     _attr_has_entity_name = True
     _attr_translation_key = "calendar"
 
+    _LABELS = {
+        "en": {"rest": "Residual waste", "paper": "Paper", "gft": "Organic waste", "pmd": "PMD"},
+        "nl": {"rest": "Restafval", "paper": "Papier", "gft": "GFT", "pmd": "PMD"},
+    }
+
     def __init__(self, coordinator: BinCollectionCoordinator) -> None:
         super().__init__(coordinator)
         self._attr_unique_id = f"{coordinator.config_entry.entry_id}_calendar"
@@ -35,13 +40,24 @@ class BinCollectionCalendar(CoordinatorEntity[BinCollectionCoordinator], Calenda
         if not upcoming:
             return None
         item = upcoming[0]
-        return CalendarEvent(summary=item.source_type, start=item.date, end=item.date)
+        return CalendarEvent(
+            summary=self._event_summary(item.waste_type, item.source_type), start=item.date, end=item.date
+        )
 
     async def async_get_events(
         self, hass: HomeAssistant, start_date: datetime, end_date: datetime
     ) -> list[CalendarEvent]:
         return [
-            CalendarEvent(summary=item.source_type, start=item.date, end=item.date)
+            CalendarEvent(
+                summary=self._event_summary(item.waste_type, item.source_type), start=item.date, end=item.date
+            )
             for item in self.coordinator.data.collections
             if start_date.date() <= item.date <= end_date.date()
         ]
+
+    def _event_summary(self, waste_type: str, source_type: str) -> str:
+        """Use a readable waste label and identify the provider in calendar views."""
+        language = self.coordinator.hass.config.language.split("-", maxsplit=1)[0]
+        label = self._LABELS.get(language, self._LABELS["en"]).get(waste_type, source_type)
+        provider = PROVIDER_LABELS.get(self.coordinator.config_entry.data.get("provider"), "Bin Collection")
+        return f"{provider}: {label}"

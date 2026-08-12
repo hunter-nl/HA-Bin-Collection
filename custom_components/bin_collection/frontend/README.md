@@ -12,3 +12,6 @@ resources:
   - url: /ha_bin_collection/bin-collection-card.js?v=1.0.0
     type: module
 ```
+
+The card uses the paired `Kliko_*_brand.png` assets: the matching
+waste-stream symbol is overlaid as a small outlined label inside the bin body.

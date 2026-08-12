@@ -3,13 +3,13 @@
 from __future__ import annotations
 
 import logging
-from datetime import date, timedelta
+from datetime import date
 from typing import Any
 
 from aiohttp import ClientError, ClientSession, ClientTimeout
 
 from ..models import BinCollectionData
-from .base import ProviderError, collection_from_item, notice_from_item
+from .base import ProviderError, collection_from_item, notice_from_item, notice_is_active
 
 URL = "https://api.mijnafvalwijzer.nl/webservices/appsinput/"
 API_KEY = "5ef443e778f41c4f75c69459eea6e6ae0c2d92de729aa0fc61653815fbd6a8ca"
@@ -28,27 +28,8 @@ def response_items(response: object) -> list[dict[str, Any]]:
 
 
 def active_notice_items(items: list[dict[str, Any]], today: date) -> list[dict[str, Any]]:
-    """Return notices that have not expired or aged past the pickup warning window."""
-    active: list[dict[str, Any]] = []
-    for item in items:
-        expiry = item.get("expiration_date")
-        published = item.get("date")
-        if expiry:
-            try:
-                expiry_date = date.fromisoformat(str(expiry).split(" ", maxsplit=1)[0])
-            except ValueError:
-                expiry_date = None
-            if expiry_date is not None and expiry_date < today:
-                continue
-        elif published:
-            try:
-                published_date = date.fromisoformat(str(published).split(" ", maxsplit=1)[0])
-            except ValueError:
-                published_date = None
-            if published_date is not None and published_date < today - timedelta(days=1):
-                continue
-        active.append(item)
-    return active
+    """Return notices until the provider removes them or explicitly expires them."""
+    return [item for item in items if notice_is_active(item, today)]
 
 
 class MijnAfvalwijzerProvider:

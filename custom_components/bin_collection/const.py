@@ -4,7 +4,7 @@ from datetime import timedelta
 
 DOMAIN = "bin_collection"
 PLATFORMS = ["sensor", "calendar"]
-CARD_RESOURCE_URL = "/bin_collection/bin-collection-card.js?v=0.0.1-alpha"
+CARD_RESOURCE_URL = "/ha_bin_collection/bin-collection-card.js?v=1.0.0-beta.3"
 
 PROVIDER_MIJNAFVALWIJZER = "mijnafvalwijzer"
 PROVIDER_ACV = "acv"
@@ -33,4 +33,6 @@ DEFAULT_UPDATE_INTERVAL = timedelta(hours=DEFAULT_SCAN_INTERVAL)
 
 EVENT_COLLECTION_REMINDER = f"{DOMAIN}.collection_reminder"
 EVENT_PROVIDER_NOTICE = f"{DOMAIN}.provider_notice"
+SERVICE_ACKNOWLEDGE_NOTICE = "acknowledge_notice"
+SERVICE_DELETE_NOTICE = "delete_notice"
 CANONICAL_WASTE_TYPES = ("rest", "paper", "gft", "pmd")

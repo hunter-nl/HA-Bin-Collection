@@ -42,7 +42,7 @@ def parse_date(value: object) -> date | None:
     """Parse common provider date representations."""
     if not value:
         return None
-    text = str(value).split("T", maxsplit=1)[0]
+    text = str(value).replace("T", " ").split(" ", maxsplit=1)[0]
     for formatter in ("%Y-%m-%d", "%d-%m-%Y", "%d/%m/%Y"):
         try:
             return datetime.strptime(text, formatter).date()
@@ -69,4 +69,15 @@ def notice_from_item(item: dict[str, Any]) -> Notice | None:
     if not body:
         return None
     notice_id = str(item.get("id") or item.get("messageId") or f"{title}:{body}")
-    return Notice(notice_id, title, body)
+    published = parse_date(
+        item.get("date") or item.get("published_date") or item.get("publishedDate") or item.get("start_date")
+    )
+    return Notice(notice_id, title, body, published)
+
+
+def notice_is_active(item: dict[str, Any], today: date) -> bool:
+    """Keep a notice until its provider gives it an explicit past expiry date."""
+    expiry = parse_date(
+        item.get("expiration_date") or item.get("expirationDate") or item.get("expires") or item.get("expiry_date")
+    )
+    return expiry is None or expiry >= today
