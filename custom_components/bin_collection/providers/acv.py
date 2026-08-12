@@ -10,7 +10,7 @@ from aiohttp import ClientError, ClientSession, ClientTimeout
 
 from ..const import ACV_COMPANY_CODE
 from ..models import BinCollectionData
-from .base import ProviderError, collection_from_item, notice_from_item, notice_is_active
+from .base import ProviderError, collection_from_item, notice_from_item, notice_is_active, redacted_response
 
 BASE_URL = "https://api.ximmio.com/api"
 
@@ -42,6 +42,7 @@ class AcvProvider:
         except (ClientError, TimeoutError, ValueError) as err:
             _LOGGER.error("ACV address request failed")
             raise ProviderError("ACV is tijdelijk niet bereikbaar") from err
+        _LOGGER.debug("ACV address response (sensitive fields redacted): %s", redacted_response(payload, self._config))
         result = payload.get("dataList", payload.get("data", [])) if isinstance(payload, dict) else payload
         if not isinstance(result, list) or not result:
             raise ProviderError("Adres niet gevonden bij ACV")
@@ -80,6 +81,7 @@ class AcvProvider:
         except (ClientError, TimeoutError, ValueError) as err:
             _LOGGER.error("ACV calendar request failed")
             raise ProviderError("ACV-kalender is tijdelijk niet bereikbaar") from err
+        _LOGGER.debug("ACV calendar response (sensitive fields redacted): %s", redacted_response(payload, self._config))
         data = payload.get("data", payload) if isinstance(payload, dict) else payload
         items = data.get("items", data.get("calendar", data.get("dataList", []))) if isinstance(data, dict) else data
         messages = data.get("notifications", data.get("messages", [])) if isinstance(data, dict) else []
