@@ -1,0 +1,21 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "HA Bin Collection instellen",
+        "description": "Kies je inzamelaar en huisadres.",
+        "data": {"provider": "Inzamelaar", "postcode": "Postcode", "house_number": "Huisnummer", "addition": "Toevoeging"}
+      },
+      "acv_address": {"title": "Kies je ACV-adres", "data": {"address_id": "Adres"}}
+    },
+    "error": {"cannot_connect": "Dit adres is niet gevonden of de inzamelaar is niet bereikbaar."},
+    "abort": {"unique_id_configured": "Deze inzamelaar en dit adres zijn al ingesteld."}
+  },
+  "options": {"step": {"init": {"title": "HA Bin Collection opties", "data": {"scan_interval": "Verversingsinterval (uren)", "reminder_enabled": "Inzamelherinneringen inschakelen", "reminder_time": "Herinneringstijd (UU:MM:SS)"}}}},
+  "entity": {
+    "sensor": {
+      "rest": {"name": "Restafval"}, "paper": {"name": "Papier"}, "gft": {"name": "GFT"}, "pmd": {"name": "PMD"}, "overview": {"name": "Overzicht"}, "notifications": {"name": "Meldingen inzamelaar"}
+    },
+    "calendar": {"calendar": {"name": "Inzameldagen"}}
+  }
+}

@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 246 246" role="img" aria-label="Restafval bin">
+  <rect width="246" height="246" fill="#777777"/>
+<path d="M193 31 246 84v162H137l-40-40c12-5 20-16 20-30l38 35 31-141z" fill="#000" opacity=".14"/>
+<path d="M69 70h117l-31 141h-38v-24c0-19-16-35-37-35H69z" fill="#fff"/>
+  <path d="m69 59 124-28 1 8L70 68z" fill="#fff"/>
+  <path d="M69 68h117v4H69z" fill="#f4f4f4"/>
+  <circle cx="80" cy="187" r="26" fill="#fff"/>
+  <circle cx="80" cy="187" r="11" fill="#777777"/>
+</svg>

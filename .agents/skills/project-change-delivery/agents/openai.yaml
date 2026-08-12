@@ -1,0 +1,4 @@
+interface:
+  display_name: "Project Change Delivery"
+  short_description: "Safely deliver project changes through PRs"
+  default_prompt: "Use $project-change-delivery to implement and deliver this repository change through a pull request."

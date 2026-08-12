@@ -1,0 +1,128 @@
+name: Publish release
+
+on:
+  pull_request:
+    branches: [main]
+    types: [closed]
+
+permissions:
+  contents: write
+
+env:
+  COMPONENT_NAME: ${{ vars.COMPONENT_NAME }}
+
+jobs:
+  publish:
+    if: >-
+      github.event.pull_request.merged == true &&
+      startsWith(github.event.pull_request.head.ref, 'release/')
+
+    runs-on: ubuntu-latest
+
+    # Configure required reviewers for this environment in repository settings.
+    environment: release
+
+    steps:
+      - uses: actions/create-github-app-token@v3
+        id: generate-token
+        with:
+          client-id: ${{ vars.RELEASE_BOT_CLIENT_ID }}
+          private-key: ${{ secrets.RELEASE_BOT_PRIVATE_KEY }}
+          permission-contents: write
+
+      - name: Checkout merged release commit
+        uses: actions/checkout@v7
+        with:
+          ref: ${{ github.event.pull_request.merge_commit_sha }}
+          fetch-depth: 0
+
+      - name: Read project version
+        id: project-version
+        uses: mikefarah/yq@v4
+        with:
+          cmd: yq -r '.project.version' pyproject.toml
+
+      - name: Validate merged release commit
+        env:
+          RELEASE_SHA: ${{ github.event.pull_request.merge_commit_sha }}
+          VERSION: ${{ steps.project-version.outputs.result }}
+        run: |
+          if [[ ! "$RELEASE_SHA" =~ ^[0-9a-fA-F]{40}$ ]]; then
+            echo "GitHub did not provide a full merge commit SHA" >&2
+            exit 1
+          fi
+
+          git fetch origin main
+
+          if ! git merge-base --is-ancestor "$RELEASE_SHA" origin/main; then
+            echo "Release commit is not contained in main" >&2
+            exit 1
+          fi
+
+          if git rev-parse "v$VERSION" >/dev/null 2>&1; then
+            echo "Tag v$VERSION already exists" >&2
+            exit 1
+          fi
+
+      - name: Create release zip
+        run: |
+          cd custom_components/${{ env.COMPONENT_NAME }}
+          zip -r ${{ github.workspace }}/bin-collection.zip .
+
+      - name: Extract custom release notes
+        id: custom-release-notes
+        uses: actions/github-script@v9
+        with:
+          result-encoding: string
+          script: |
+            const pullRequestBody = context.payload.pull_request.body ?? "";
+            const match = pullRequestBody.match(
+              /<!-- custom-release-notes:start -->\s*([\s\S]*?)\s*<!-- custom-release-notes:end -->/
+            );
+            const notes = match?.[1]?.trim();
+
+            if (!notes || notes === "_No additional release notes._") {
+              return "";
+            }
+
+            return notes;
+
+      - name: Render release notes
+        id: release-drafter
+        uses: release-drafter/release-drafter@v7
+        with:
+          config-name: release-drafter.yml
+          token: ${{ steps.generate-token.outputs.token }}
+          # The manually prepared version is authoritative; dry-run renders only.
+          dry-run: true
+          version: ${{ steps.project-version.outputs.result }}
+          tag: v${{ steps.project-version.outputs.result }}
+          commitish: ${{ github.event.pull_request.merge_commit_sha }}
+
+      - name: Assemble release body
+        id: release-body
+        uses: actions/github-script@v9
+        env:
+          CUSTOM_RELEASE_NOTES: ${{ steps.custom-release-notes.outputs.result }}
+          GENERATED_RELEASE_NOTES: ${{ steps.release-drafter.outputs.body }}
+        with:
+          result-encoding: string
+          script: |
+            const customNotes = process.env.CUSTOM_RELEASE_NOTES.trim();
+            const generatedNotes = process.env.GENERATED_RELEASE_NOTES.trim();
+
+            return customNotes
+              ? `${customNotes}\n\n${generatedNotes}\n`
+              : `${generatedNotes}\n`;
+
+      - name: Create release
+        uses: softprops/action-gh-release@v3
+        with:
+          token: ${{ steps.generate-token.outputs.token }}
+          tag_name: v${{ steps.project-version.outputs.result }}
+          target_commitish: ${{ github.event.pull_request.merge_commit_sha }}
+          name: ${{ steps.release-drafter.outputs.name }}
+          body: ${{ steps.release-body.outputs.result }}
+          files: ${{ github.workspace }}/bin-collection.zip
+          prerelease: ${{ contains(steps.project-version.outputs.result, '-') }}
+          make_latest: ${{ !contains(steps.project-version.outputs.result, '-') }}

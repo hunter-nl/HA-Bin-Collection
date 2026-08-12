@@ -1,0 +1,147 @@
+# .git-cliff configuration for HA-Bin-Collection
+# Generates changelogs from conventional commits
+
+[changelog]
+# Changelog template
+header = """
+<img src="brand/logo.svg" alt="Bin Collection" style="max-width: 750px;">
+If you find this project useful, consider supporting its development:
+
+<a href="https://www.buymeacoffee.com/hunter.nl" target="_blank"><img src="https://cdn.buymeacoffee.com/buttons/v2/default-yellow.png" alt="Buy Me A Coffee" style="height: 60px !important;width: 217px !important;"></a>
+
+# Changelog
+"""
+
+body = """
+{%- macro remote_url() -%}
+  https://github.com/{{ remote.github.owner }}/{{ remote.github.repo }}
+{%- endmacro -%}
+{%- macro print_commit(commit) -%}
+- {% if commit.remote.pr_number %}[{{ commit.remote.pr_title | default(value=commit.message) | upper_first }}]({{ self::remote_url() }}/pull/{{ commit.remote.pr_number }}) ([#{{ commit.remote.pr_number }}]({{ self::remote_url() }}/pull/{{ commit.remote.pr_number }})){% else %}{% if commit.scope %}**{{ commit.scope }}:** {% endif %}{{ commit.message | upper_first }} [{{ commit.id | truncate(length=7, end="") }}]({{ self::remote_url() }}/commit/{{ commit.id }}){% endif %}{% for link in commit.links %} [{{ link.text }}]({{ link.href }}){% endfor %}{% if commit.breaking %} **BREAKING CHANGE**{% endif %}
+{%- endmacro -%}
+
+## [{{ version | default(value="Unreleased") }}]({{ self::remote_url() }}/releases/tag/{{ version | default(value="Unreleased") }})
+{% for commit_group, commit_list in commits | group_by(attribute="group") %}
+  {% set pull_requests = commit_list | filter(attribute="remote.pr_number") | unique(attribute="remote.pr_number") %}
+  {% if pull_requests | length > 0 %}
+    ### {{ commit_group | striptags | trim | upper_first }}
+    {% for commit in pull_requests %}
+      {{ self::print_commit(commit=commit) }}
+    {% endfor %}
+  {% endif %}
+{% endfor %}
+
+{% if github %}
+  {% if github.contributors | filter(attribute="is_first_time", value=true) | length != 0 %}
+    ## ❤️ New Contributors
+  {% endif %}
+  {% for contributor in github.contributors | filter(attribute="is_first_time", value=true) %}
+    * @{{ contributor.username }} made their first contribution
+    {% if contributor.pr_number %}
+      in [#{{ contributor.pr_number }}]({{ self::remote_url() }}/pull/{{ contributor.pr_number }})
+    {% endif %}
+  {% endfor %}
+{% endif %}
+"""
+
+footer = """
+## Funding
+
+If you find this project useful, consider supporting its development:
+
+<a href="https://www.buymeacoffee.com/hunter.nl" target="_blank"><img src="https://cdn.buymeacoffee.com/buttons/v2/default-yellow.png" alt="Buy Me A Coffee" style="height: 60px !important;width: 217px !important;"></a>
+"""
+
+postprocessors = [
+  # Replace the placeholder `<REPO>` with a URL.
+  { pattern = "<REPO>", replace = "https://github.com/hunter-nl/HA-Bin-Collection" },  # replace repository URL
+]
+
+[git-conventional-commits]
+# Use conventional commits for grouping
+separator = " "
+commit_parsing_regex = "^(?<prefix>(feat|fix|chore|docs|style|refactor|perf|test|build|ci|!|revert)\\((?<scope>[^()\\s]+)\\)|(?<prefix>[^()\\s]+)):(?<message>.+)$"
+group_parsing_regex = "^(feat|fix|chore|docs|style|refactor|perf|test|build|ci|!|revert)"
+
+[remote.github]
+owner = "hunter-nl"
+repo = "HA-Bin-Collection"
+
+[git]
+conventional_commits = true
+filter_unconventional = false
+require_conventional = false
+split_commits = false
+protect_breaking_commits = true
+filter_commits = false
+fail_on_unmatched_commit = false
+tag_pattern = "^v[0-9]+\\.[0-9]+\\.[0-9]+([.-][0-9A-Za-z.-]+)?$"
+# skip_tags = "v0.1.0-beta.1"
+ignore_tags = ""
+topo_order = false
+topo_order_commits = false
+sort_commits = "newest"
+# limit_commits = 42
+recurse_submodules = false
+# include_paths = ["src/", "doc/**/*.md"]
+# exclude_paths = ["unrelated/"]
+commit_parsers = [
+  { message = "^chore\\(release\\):", skip = true },
+  { message = "^docs\\(changelog\\):", skip = true },
+  { field = "remote.pr_labels", pattern = "release", skip = true },
+  { field = "remote.pr_labels", pattern = "wontfix", skip = true },
+  { field = "remote.pr_labels", pattern = "invalid", skip = true },
+  { field = "remote.pr_labels", pattern = "duplicate", skip = true },
+  { field = "remote.pr_labels", pattern = "question", skip = true },
+  { field = "remote.pr_labels", pattern = "discussion", skip = true },
+  { field = "remote.pr_labels", pattern = "help wanted", skip = true },
+  { field = "remote.pr_labels", pattern = "good first issue", skip = true },
+  { field = "remote.pr_labels", pattern = "breaking", group = "<!-- 0 --> 🚨 Breaking changes" },
+  { field = "remote.pr_labels", pattern = "enhancement", group = "<!-- 1 --> ✨ Features" },
+  { field = "remote.pr_labels", pattern = "feature", group = "<!-- 1 --> ✨ Features" },
+  { field = "remote.pr_labels", pattern = "bug", group = "<!-- 2 --> 🐛 Fixes" },
+  { field = "remote.pr_labels", pattern = "dependencies", group = "<!-- 3 --> ⬆️ Dependencies" },
+  { field = "remote.pr_labels", pattern = "documentation", group = "<!-- 5 --> 📝 Documentation" },
+  { field = "remote.pr_title", pattern = "(?i)^breaking", group = "<!-- 0 --> 🚨 Breaking changes" },
+  { field = "remote.pr_title", pattern = "(?i)^feat", group = "<!-- 1 --> ✨ Features" },
+  { field = "remote.pr_title", pattern = "(?i)^fix", group = "<!-- 2 --> 🐛 Fixes" },
+  { field = "remote.pr_title", pattern = "(?i)^dependencies", group = "<!-- 3 --> ⬆️ Dependencies" },
+  { field = "remote.pr_title", pattern = "(?i)^refactor", group = "<!-- 4 --> ♻️ Refactor" },
+  { field = "remote.pr_title", pattern = "(?i)^docs", group = "<!-- 5 --> 📝 Documentation" },
+  { field = "remote.pr_title", pattern = "(?i)^perf", group = "<!-- 6 --> 🚀 Performance Improvements" },
+  { field = "remote.pr_title", pattern = "(?i)^revert", group = "<!-- 7 --> ⏪ Reverts" },
+  { field = "remote.pr_title", pattern = "(?i)^style", group = "<!-- 8 --> 🎨 Styles" },
+  { field = "remote.pr_title", pattern = "(?i)^test", group = "<!-- 9 --> 🧪 Tests" },
+  { field = "remote.pr_title", pattern = "(?i)^chore", group = "<!-- 10 --> 🔧 Maintenance" },
+  { field = "remote.pr_title", pattern = "(?i)^ci", group = "<!-- 10 --> 🔧 Maintenance" },
+  { field = "remote.pr_title", pattern = "(?i)^build", group = "<!-- 10 --> 🔧 Maintenance" },
+  { message = "(?i)^breaking", group = "<!-- 0 --> 🚨 Breaking changes" },
+  { message = "(?i)^feat", group = "<!-- 1 --> ✨ Features" },
+  { message = "(?i)^fix", group = "<!-- 2 --> 🐛 Fixes" },
+  { message = "(?i)^dependencies", group = "<!-- 3 --> ⬆️ Dependencies" },
+  { message = "(?i)^refactor", group = "<!-- 4 --> ♻️ Refactor" },
+  { message = "(?i)^docs", group = "<!-- 5 --> 📝 Documentation" },
+  { message = "(?i)^perf", group = "<!-- 6 --> 🚀 Performance Improvements" },
+  { message = "(?i)^revert", group = "<!-- 7 --> ⏪ Reverts" },
+  { message = "(?i)^style", group = "<!-- 8 --> 🎨 Styles" },
+  { message = "(?i)^test", group = "<!-- 9 --> 🧪 Tests" },
+  { message = "(?i)^chore", group = "<!-- 10 --> 🔧 Maintenance" },
+  { message = "(?i)^ci", group = "<!-- 10 --> 🔧 Maintenance" },
+  { message = "(?i)^build", group = "<!-- 10 --> 🔧 Maintenance" },
+  { message = "(?i).* deprecated", body = "(?i).*deprecated", group = "<!-- 11 --> ⚠️ Deprecations" },
+  { message = ".*", group = "<!-- 12 --> ❓ Miscellaneous" }
+]
+link_parsers = [
+  { pattern = "(?i)(close[sd]?|fix(?:e[sd])?|resolve[sd]?)\\s+#(\\d+)", text = "$1: #$2", href = "https://github.com/hunter-nl/HA-Bin-Collection/issues/$2" }
+]
+processing_order = [
+  "commit_preprocessors",
+  "split_commits",
+  "conventional_commits",
+  "commit_parsers",
+  "link_parsers",
+]
+
+[filter]
+# Exclude merge commits, chore(release), and docs(changelog)
+# exclude_messages = "^(Merge pull request|chore\\(release\\):|docs\\(changelog\\):)"

@@ -1,0 +1,45 @@
+---
+name: "Feature request"
+description: "Suggest an improvement to HA Bin Collection"
+title: "[Feature]: "
+body:
+  - type: markdown
+    attributes:
+      value: "Thanks for suggesting an improvement. Please search [existing feature requests](https://github.com/hunter-nl/HA-Bin-Collection/issues?q=is%3Aissue+label%3Afeature) before opening a new one."
+
+  - type: checkboxes
+    id: checks
+    attributes:
+      label: Checklist
+      options:
+        - label: I searched existing issues and did not find a duplicate.
+          required: true
+        - label: This request describes one feature or improvement.
+          required: true
+
+  - type: textarea
+    id: problem
+    attributes:
+      label: "Problem or use case"
+      description: "What would this improve? Leave blank if there is no specific problem to solve."
+
+  - type: textarea
+    id: proposal
+    attributes:
+      label: "Proposed solution"
+      description: "Describe the behavior you would like, preferably from the user's point of view."
+      placeholder: "As a ..., I want ..., so that ..."
+    validations:
+      required: true
+
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: "Alternatives or workarounds"
+      description: "What other approaches have you considered, if any?"
+
+  - type: textarea
+    id: context
+    attributes:
+      label: "Additional context"
+      description: "Add mockups, examples, screenshots, or implementation notes that could help evaluate the request."

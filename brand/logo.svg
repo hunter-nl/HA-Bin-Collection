@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1100 246" role="img" aria-label="HA Bin Collection">
+  <defs>
+    <linearGradient id="background" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#ffc64e"/>
+      <stop offset=".5" stop-color="#f28a0b"/>
+      <stop offset="1" stop-color="#b94700"/>
+    </linearGradient>
+    <clipPath id="round"><rect width="1100" height="246" rx="36"/></clipPath>
+  </defs>
+  <g clip-path="url(#round)">
+    <rect width="1100" height="246" fill="url(#background)"/>
+    <path d="M193 31 246 84v162H137l-40-40c12-5 20-16 20-30l38 35 31-141z" fill="#843f09" opacity=".45"/>
+    <path d="M69 70h117l-31 141h-38v-24c0-19-16-35-37-35H69z" fill="#fff"/>
+    <path d="m69 59 124-28 1 8L70 68z" fill="#fff"/>
+    <path d="M69 68h117v4H69z" fill="#fff" opacity=".85"/>
+    <circle cx="80" cy="187" r="26" fill="#fff"/>
+    <circle cx="80" cy="187" r="11" fill="#ef8b18"/>
+    <path d="M276 28v190" stroke="#fff" stroke-opacity=".22" stroke-width="2"/>
+    <text x="322" y="145" fill="#fff" font-family="Arial, Helvetica, sans-serif" font-size="82" font-weight="700">Bin Collection</text>
+  </g>
+</svg>

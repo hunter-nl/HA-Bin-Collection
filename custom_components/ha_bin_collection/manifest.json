@@ -1,0 +1,13 @@
+{
+  "domain": "ha_bin_collection",
+  "name": "HA Bin Collection",
+  "after_dependencies": ["lovelace"],
+  "codeowners": ["@hunter-nl"],
+  "config_flow": true,
+  "documentation": "https://github.com/hunter-nl/HA-Bin-Collection",
+  "integration_type": "service",
+  "iot_class": "cloud_polling",
+  "issue_tracker": "https://github.com/hunter-nl/HA-Bin-Collection/issues",
+  "requirements": [],
+  "version": "0.0.1-alpha"
+}

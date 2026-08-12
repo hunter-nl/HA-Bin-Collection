@@ -1,0 +1,150 @@
+name-template: "v$RESOLVED_VERSION"
+tag-template: "v$RESOLVED_VERSION"
+
+categories:
+  - type: "pre-exclude"
+    when:
+      labels:
+        - no-changelog
+        - skip-changelog
+        - invalid
+        - release
+  - title: ":rotating_light: BREAKING CHANGES :rotating_light:"
+    when:
+      labels:
+        - breaking
+  - title: ":wastebasket: Removed"
+    when:
+      labels:
+        - removed
+  - title: ":warning: Deprecated"
+    when:
+      labels:
+        - deprecated
+  - title: ":sparkles: New features and improvements"
+    when:
+      labels:
+        - enhancement
+        - feature
+  - title: ":bug: Bug fixes"
+    when:
+      labels:
+        - bug
+        - fix
+        - bugfix
+        - regression
+  - title: ":globe_with_meridians: Localization and translation"
+    when:
+      labels:
+        - localization
+  - title: ":memo: Documentation updates"
+    when:
+      labels:
+        - documentation
+  - title: ":maintenance: Maintenance"
+    when:
+      labels:
+        - chore
+        - maintenance
+  - title: ":test_tube: Tests"
+    when:
+      labels:
+        - test
+        - tests
+  # Default label used by Dependabot
+  - title: ":package: Dependency updates"
+    when:
+      labels:
+        - dependencies
+        - dependency
+    collapse-after: 15
+  - title: ":recycle: Refactoring"
+    when:
+      labels:
+        - refactor
+  - title: ":wrench: Configuration"
+    when:
+      labels:
+        - config
+  - title: ":construction: Work in progress"
+    when:
+      labels:
+        - wip
+  - title: ":revert: Reverts"
+    when:
+      labels:
+        - revert
+  - title: ":question: Other changes"
+  - type: "version-resolver"
+    semver-increment: "major"
+    when:
+      labels:
+        - "major"
+        - "breaking"
+  - type: "version-resolver"
+    semver-increment: "minor"
+    when:
+      labels:
+        - "minor"
+  - type: "version-resolver"
+    semver-increment: "patch"
+    when:
+      labels:
+        - "patch"
+        - "bug"
+        - "fix"
+  - type: "version-resolver"
+    semver-increment: "patch"
+
+change-template: "- $TITLE (#$NUMBER) @$AUTHOR"
+change-title-escapes: '\<*_&`'
+
+template: |
+  ## Installation and upgrade
+
+  See the [README](https://github.com/hunter-nl/HA-Bin-Collection/blob/main/README.md#install) for installation and upgrade instructions.
+
+  ---
+
+  ## What's Changed in v$RESOLVED_VERSION
+
+  $CHANGES
+
+  ---
+
+  **Full Changelog**: https://github.com/hunter-nl/HA-Bin-Collection/compare/$PREVIOUS_TAG...v$RESOLVED_VERSION
+
+autolabeler:
+  - label: "breaking"
+    title:
+      - "/breaking change/i"
+  - label: "dependencies"
+    title:
+      - "/^chore\\(deps\\)/i"
+      - "/^chore: bump/i"
+  - label: "documentation"
+    title:
+      - "/^doc/i"
+  - label: "bug"
+    title:
+      - "/^bug/i"
+      - "/^fix/i"
+  - label: "feature"
+    title:
+      - "/^feature/i"
+      - "/^feat/i"
+  - label: "test"
+    title:
+      - "/^test/i"
+  - label: "revert"
+    title:
+      - "/^revert/i"
+  - label: "wip"
+    title:
+      - "/^wip/i"
+  - label: "config"
+    title:
+      - "/^config/i"
+  - label: "refactor"
+    title:
+      - "/^refactor/i"

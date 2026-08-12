@@ -1,0 +1,110 @@
+name: Prepare release
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "Release version, without prefix v"
+        required: true
+        type: string
+      release_notes:
+        description: "Optional Markdown prepended verbatim to published notes; include your own heading"
+        required: false
+        type: string
+
+permissions:
+  contents: read
+  pull-requests: read
+
+env:
+  COMPONENT_NAME: ${{ vars.COMPONENT_NAME }}
+  VERSION: ${{ inputs.version }}
+
+jobs:
+  prepare:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/create-github-app-token@v3
+        id: generate-token
+        with:
+          client-id: ${{ vars.RELEASE_BOT_CLIENT_ID }}
+          private-key: ${{ secrets.RELEASE_BOT_PRIVATE_KEY }}
+          permission-contents: write
+          permission-pull-requests: write
+
+      - name: Checkout main
+        uses: actions/checkout@v7
+        with:
+          ref: main
+          fetch-depth: 0
+
+      - name: Validate version
+        run: |
+          if [[ ! "$VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+([.-][0-9A-Za-z.-]+)?$ ]]; then
+            echo "Invalid semantic version: v$VERSION" >&2
+            exit 1
+          fi
+
+          if git rev-parse "v$VERSION" >/dev/null 2>&1; then
+            echo "Tag v$VERSION already exists" >&2
+            exit 1
+          fi
+
+      - name: Update manifest version
+        uses: mikefarah/yq@v4
+        with:
+          cmd: yq e -P -o=json -i '.version = strenv(VERSION)' "custom_components/${{ env.COMPONENT_NAME }}/manifest.json"
+
+      - name: Update package version
+        uses: mikefarah/yq@v4
+        with:
+          cmd: yq e -P -o=json -i '.version = strenv(VERSION)' "package.json"
+
+      - name: Update pyproject version
+        run: |
+          sed -i "s/^version = .*/version = \"$VERSION\"/" ${{ github.workspace }}/pyproject.toml
+
+      - name: Generate changelog
+        uses: orhun/git-cliff-action@v4
+        with:
+          config: .github/.git-cliff.toml
+          args: -vv --tag v${{ inputs.version }}
+        env:
+          OUTPUT: CHANGELOG.md
+          GITHUB_REPO: ${{ github.repository }}
+
+      - name: Create release pull request
+        id: create-pull-request
+        uses: peter-evans/create-pull-request@v8
+        with:
+          token: ${{ steps.generate-token.outputs.token }}
+          sign-commits: true
+          commit-message: "chore(release): ${{ inputs.version }}"
+          branch: release/${{ inputs.version }}
+          base: main
+          title: "chore(release): ${{ inputs.version }}"
+          body: |
+            Prepares release ${{ inputs.version }}.
+
+            - Updates version files
+            - Updates CHANGELOG.md
+            - Must pass CI and required review
+
+            <!-- custom-release-notes:start -->
+            ${{ inputs.release_notes || '_No additional release notes._' }}
+            <!-- custom-release-notes:end -->
+          labels: release
+          add-paths: |
+            custom_components/${{ env.COMPONENT_NAME }}/manifest.json
+            package.json
+            pyproject.toml
+            CHANGELOG.md
+
+      - name: Enable release pull request auto-merge
+        if: steps.create-pull-request.outputs.pull-request-number
+        uses: peter-evans/enable-pull-request-automerge@v3
+        with:
+          token: ${{ steps.generate-token.outputs.token }}
+          pull-request-number: ${{ steps.create-pull-request.outputs.pull-request-number }}
+          merge-method: merge

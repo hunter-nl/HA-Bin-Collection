@@ -1,0 +1,62 @@
+name: Owner approval
+
+on:
+  issue_comment:
+    types: [created]
+  pull_request_review:
+    types: [submitted]
+
+permissions:
+  contents: read
+  pull-requests: read
+
+jobs:
+  approve:
+    if: >-
+      (
+        github.event_name == 'issue_comment' &&
+        github.event.issue.pull_request &&
+        github.event.comment.user.login == github.repository_owner &&
+        github.event.comment.body == '/approve'
+      ) ||
+      (
+        github.event_name == 'pull_request_review' &&
+        github.event.review.user.login == github.repository_owner &&
+        github.event.review.body == '/approve'
+      )
+    runs-on: ubuntu-latest
+    steps:
+      - name: Create approval bot token
+        id: approval-bot-token
+        uses: actions/create-github-app-token@v3
+        with:
+          client-id: ${{ vars.APPROVAL_BOT_CLIENT_ID }}
+          private-key: ${{ secrets.APPROVAL_BOT_PRIVATE_KEY }}
+          permission-contents: write
+          permission-pull-requests: write
+
+      - name: Submit approval
+        uses: actions/github-script@v9
+        with:
+          github-token: ${{ steps.approval-bot-token.outputs.token }}
+          script: |
+            const pullNumber = context.payload.issue?.number ?? context.payload.pull_request.number;
+            const { data: pull } = await github.rest.pulls.get({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              pull_number: pullNumber,
+            });
+
+            if (pull.base.ref !== "main") {
+              core.setFailed("Only pull requests targeting main can be approved.");
+              return;
+            }
+
+            await github.rest.pulls.createReview({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              pull_number: pullNumber,
+              commit_id: pull.head.sha,
+              event: "APPROVE",
+              body: "Approved by the repository owner via /approve.",
+            });

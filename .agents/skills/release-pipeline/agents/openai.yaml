@@ -1,0 +1,4 @@
+interface:
+  display_name: "Release Pipeline"
+  short_description: "Maintain this project’s release automation"
+  default_prompt: "Use $release-pipeline to update or diagnose this repository’s release workflow."
