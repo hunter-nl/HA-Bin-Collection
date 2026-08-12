@@ -2,7 +2,7 @@
 
 from datetime import date
 
-from custom_components.ha_bin_collection.providers.base import (
+from custom_components.bin_collection.providers.base import (
     collection_from_item,
     normalize_waste_type,
     notice_from_item,

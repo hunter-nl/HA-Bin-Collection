@@ -1,10 +1,10 @@
-"""Constants for HA Bin Collection."""
+"""Constants for Bin Collection."""
 
 from datetime import timedelta
 
-DOMAIN = "ha_bin_collection"
+DOMAIN = "bin_collection"
 PLATFORMS = ["sensor", "calendar"]
-CARD_RESOURCE_URL = "/ha_bin_collection/ha-bin-collection-card.js?v=0.0.1-alpha"
+CARD_RESOURCE_URL = "/bin_collection/bin-collection-card.js?v=0.0.1-alpha"
 
 PROVIDER_MIJNAFVALWIJZER = "mijnafvalwijzer"
 PROVIDER_ACV = "acv"

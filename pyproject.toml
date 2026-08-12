@@ -1,5 +1,5 @@
 [project]
-name = "ha-bin-collection"
+name = "bin-collection"
 version = "0.0.1-alpha.1"
 description = "Home Assistant custom integration for Dutch waste collection calendars"
 readme = "README.md"
@@ -19,8 +19,8 @@ dev = [
 
 [tool.pytest.ini_options]
 python_files = ["test_*.py", "*_test.py"]
-testpaths = ["tests"]
 pythonpath = ["."]
+testpaths = ["tests"]
 
 [tool.ruff]
 target-version = "py314"

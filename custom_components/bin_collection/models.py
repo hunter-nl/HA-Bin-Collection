@@ -1,4 +1,4 @@
-"""Normalized data used by all HA Bin Collection providers."""
+"""Normalized data used by all Bin Collection providers."""
 
 from __future__ import annotations
 

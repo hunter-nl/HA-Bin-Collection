@@ -1,5 +1,5 @@
 {
-  "name": "ha-bin-collection",
+  "name": "bin-collection",
   "displayName": "Home Assistant Bin Collection",
   "version": "0.0.1-alpha.1",
   "description": "Home Assistant integration for Dutch waste collection calendars.",

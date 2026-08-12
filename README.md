@@ -1,6 +1,6 @@
-# HA Bin Collection
+# Bin Collection
 
-<img src="brand/logo.svg" alt="HA Bin Collection" style="max-width: 600px;">
+<img src="brand/logo.svg" alt="Bin Collection" style="max-width: 600px;">
 
 [![Release][release-badge]][release-url]
 [![Validate][validate-badge]][validate-url]
@@ -22,7 +22,7 @@
 [hacs-badge]: https://img.shields.io/badge/HACS-Custom-41BDF5?logo=homeassistantcommunitystore&logoColor=white
 [hacs-url]: https://www.hacs.xyz/docs/faq/custom_repositories/
 
-HA Bin Collection is a Home Assistant custom integration for Dutch waste collection calendars. Current version supports **MijnAfvalwijzer** and **ACV** (Ximmio), with a provider design intended for further other collectors.
+Bin Collection is a Home Assistant custom integration for Dutch waste collection calendars. Current version supports **MijnAfvalwijzer** and **ACV** (Ximmio), with a provider design intended for further other collectors.
 
 It gives every configured address its own collection calendar, consistent Rest/Papier/GFT/PMD date sensors, provider notices, day-before reminders, and a compact Lovelace card.
 
@@ -36,13 +36,13 @@ It gives every configured address its own collection calendar, consistent Rest/P
 
 1. Open **HACS** → **⋮** → **Custom repositories**.
 2. Add `hunter-nl/HA-Bin-Collection` as an **Integration** repository.
-3. Find **HA Bin Collection**, download it, and restart Home Assistant.
-4. Add **HA Bin Collection** in **Settings → Devices & services**.
+3. Find **Bin Collection**, download it, and restart Home Assistant.
+4. Add **Bin Collection** in **Settings → Devices & services**.
 
 ### Manual
 
-1. Copy `custom_components/ha_bin_collection` to `/config/custom_components/ha_bin_collection`.
-2. Restart Home Assistant, then add **HA Bin Collection** in **Settings → Devices & services**. Each address is a separate integration entry.
+1. Copy `custom_components/bin_collection` to `/config/custom_components/bin_collection`.
+2. Restart Home Assistant, then add **Bin Collection** in **Settings → Devices & services**. Each address is a separate integration entry.
 
 The setup flow asks for provider, postcode, house number, and optional addition. Its options page controls the refresh period (six hours by default) and the day-before reminder (20:00 local time by default).
 
@@ -55,12 +55,12 @@ HACS checks [hunter-nl/HA-Bin-Collection](https://github.com/hunter-nl/HA-Bin-Co
 ### Manual
 
 1. Create a Home Assistant backup.
-2. Replace `/config/custom_components/ha_bin_collection` with the `custom_components/ha_bin_collection` directory from the desired [GitHub release](https://github.com/hunter-nl/HA-Bin-Collection/releases).
+2. Replace `/config/custom_components/bin_collection` with the `custom_components/bin_collection` directory from the desired [GitHub release](https://github.com/hunter-nl/HA-Bin-Collection/releases).
 3. Restart Home Assistant.
 
 ## Entities
 
-For each address HA Bin Collection creates an all-collections calendar plus these stable sensors:
+For each address Bin Collection creates an all-collections calendar plus these stable sensors:
 
 - Rest, Papier, GFT and PMD: the next pickup date for the category.
 - Overview: the next pickup date and `collections`/`notices` attributes used by the card.
@@ -70,11 +70,11 @@ Additional provider categories remain available in the Overview data instead of 
 
 ## Dashboard card
 
-For Home Assistant's standard storage-mode dashboards, HA Bin Collection automatically adds its bundled card as a JavaScript module resource. Then use the overview entity created for the address:
+For Home Assistant's standard storage-mode dashboards, Bin Collection automatically adds its bundled card as a JavaScript module resource. Then use the overview entity created for the address:
 
 ```yaml
-type: custom:ha-bin-collection-card
-entity: sensor.ha_bin_collection_home_overview
+type: custom:bin-collection-card
+entity: sensor.bin_collection_home_overview
 ```
 
 The card shows the next pickups using Rest (grey), Papier (light blue), GFT (green), and PMD (orange), together with collector notices.
@@ -83,7 +83,7 @@ If you use Lovelace `resource_mode: yaml`, Home Assistant deliberately keeps res
 
 ```yaml
 resources:
-  - url: /ha_bin_collection/ha-bin-collection-card.js?v=0.0.1-alpha
+  - url: /bin_collection/bin-collection-card.js?v=0.0.1-alpha
     type: module
 ```
 
@@ -91,16 +91,16 @@ resources:
 
 New or changed collector notices and each scheduled reminder create a persistent Home Assistant notification. They also fire events, so users choose their own `notify` service rather than giving this integration device credentials:
 
-- `ha_bin_collection.provider_notice`: `entry_id`, `title`, `body`
-- `ha_bin_collection.collection_reminder`: `entry_id`, `date`, `waste_types`, `message`
+- `bin_collection.provider_notice`: `entry_id`, `title`, `body`
+- `bin_collection.collection_reminder`: `entry_id`, `date`, `waste_types`, `message`
 
 Example mobile notification automation:
 
 ```yaml
-alias: HA Bin Collection reminder to phone
+alias: Bin Collection reminder to phone
 triggers:
   - trigger: event
-    event_type: ha_bin_collection.collection_reminder
+    event_type: bin_collection.collection_reminder
 actions:
   - action: notify.mobile_app_my_phone
     data:
@@ -110,7 +110,7 @@ actions:
 
 ## Troubleshooting
 
-Enable `custom_components.ha_bin_collection: debug` in the logger configuration, refresh the integration entry, and include the provider and a redacted address when reporting an issue.
+Enable `custom_components.bin_collection: debug` in the logger configuration, refresh the integration entry, and include the provider and a redacted address when reporting an issue.
 
 ## Support
 

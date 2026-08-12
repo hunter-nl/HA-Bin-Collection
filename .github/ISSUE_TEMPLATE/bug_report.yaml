@@ -23,8 +23,8 @@ body:
   - type: input
     id: version
     attributes:
-      label: "HA Bin Collection version"
-      description: "HA Bin Collection version that shows the problem."
+      label: "Bin Collection version"
+      description: "Bin Collection version that shows the problem."
       placeholder: v1.0.4
     validations:
       required: true

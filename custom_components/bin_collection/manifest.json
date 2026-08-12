@@ -1,13 +1,8 @@
 {
-  "domain": "ha_bin_collection",
-  "name": "HA Bin Collection",
-  "after_dependencies": [
-    "http",
-    "lovelace"
-  ],
-  "codeowners": [
-    "@hunter-nl"
-  ],
+  "domain": "bin_collection",
+  "name": "Bin Collection",
+  "after_dependencies": ["http", "lovelace"],
+  "codeowners": ["@hunter-nl"],
   "config_flow": true,
   "documentation": "https://github.com/hunter-nl/HA-Bin-Collection",
   "integration_type": "service",
