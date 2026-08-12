@@ -34,7 +34,7 @@ class BinCollectionEntity(CoordinatorEntity[BinCollectionCoordinator]):
         return DeviceInfo(
             identifiers={(DOMAIN, self.coordinator.config_entry.entry_id)},
             name="Bin Collection",
-            manufacturer="HA Bin Collection",
+            manufacturer="Bin Collection",
         )
 
 
