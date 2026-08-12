@@ -13,5 +13,5 @@ resources:
     type: module
 ```
 
-The card uses the paired `Kliko_*_brand.png` assets: the bin icon and the
-matching waste-stream symbol are presented side by side.
+The card uses the paired `Kliko_*_brand.png` assets: the matching
+waste-stream symbol is overlaid as a small badge on the right side of the bin.
