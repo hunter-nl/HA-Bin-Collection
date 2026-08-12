@@ -1,6 +1,6 @@
 {
   "name": "bin-collection",
-  "displayName": "Home Assistant Bin Collection",
+  "displayName": "Bin Collection",
   "version": "1.0.0-beta.1",
   "description": "Home Assistant integration for Dutch waste collection calendars.",
   "license": "AGPL-3.0-only",

@@ -32,7 +32,8 @@
         "data": {
           "scan_interval": "Verversingsinterval (uren)",
           "reminder_enabled": "Inzamelherinneringen inschakelen",
-          "reminder_time": "Herinneringstijd (UU:MM:SS)"
+          "reminder_time": "Herinneringstijd (UU:MM:SS)",
+          "log_level": "Logniveau"
         }
       }
     }

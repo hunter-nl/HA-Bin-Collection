@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import logging
 from pathlib import Path
 from typing import Any, cast
 
@@ -11,17 +12,28 @@ from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers import config_validation as cv
 
-from .const import CARD_RESOURCE_URL, DOMAIN, PLATFORMS
+from .const import (
+    CARD_RESOURCE_URL,
+    CONF_LOG_LEVEL,
+    DEFAULT_LOG_LEVEL,
+    DOMAIN,
+    PLATFORMS,
+)
 from .coordinator import BinCollectionCoordinator
 from .notifications import DeliveryManager
 
 type BinCollectionConfigEntry = ConfigEntry[BinCollectionCoordinator]
+
+_LOGGER = logging.getLogger(__package__)
 
 CONFIG_SCHEMA = cv.config_entry_only_config_schema(DOMAIN)
 
 
 async def async_setup_entry(hass: HomeAssistant, entry: BinCollectionConfigEntry) -> bool:
     """Set up Bin Collection from one config entry."""
+    log_level = str(entry.options.get(CONF_LOG_LEVEL, DEFAULT_LOG_LEVEL)).upper()
+    _LOGGER.setLevel(getattr(logging, log_level, logging.INFO))
+    _LOGGER.info("Setting up Bin Collection service (log level: %s)", log_level)
     hass.data.setdefault(DOMAIN, {})
     await _async_register_card_resource(hass)
     coordinator = BinCollectionCoordinator(hass, entry)
@@ -33,6 +45,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: BinCollectionConfigEntry
     hass.data[DOMAIN][entry.entry_id] = {"coordinator": coordinator, "delivery": delivery}
     await hass.config_entries.async_forward_entry_setups(entry, PLATFORMS)
     entry.async_on_unload(entry.add_update_listener(_async_update_listener))
+    _LOGGER.info("Bin Collection service ready")
     return True
 
 
@@ -74,4 +87,5 @@ async def async_unload_entry(hass: HomeAssistant, entry: BinCollectionConfigEntr
     if unloaded:
         runtime = hass.data[DOMAIN].pop(entry.entry_id)
         await runtime["delivery"].async_unload()
+        _LOGGER.info("Unloaded Bin Collection service")
     return unloaded

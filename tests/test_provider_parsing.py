@@ -7,6 +7,7 @@ from custom_components.bin_collection.providers.base import (
     normalize_waste_type,
     notice_from_item,
 )
+from custom_components.bin_collection.providers.mijnafvalwijzer import response_items
 
 
 def test_normalizes_required_categories_and_keeps_unknown_type() -> None:
@@ -15,6 +16,7 @@ def test_normalizes_required_categories_and_keeps_unknown_type() -> None:
     assert normalize_waste_type("oud papier") == "paper"
     assert normalize_waste_type("Groente-Fruit-Tuinafval") == "gft"
     assert normalize_waste_type("Plastic verpakkingen") == "pmd"
+    assert normalize_waste_type("gkbp") == "pmd"
     assert normalize_waste_type("Textiel afval") == "textiel_afval"
 
 
@@ -30,3 +32,13 @@ def test_parses_common_collection_and_notice_shapes() -> None:
     assert notice.id == "rain"
     assert notice.title == "Uitstel"
     assert notice.body == "Papier is vertraagd."
+
+
+def test_parses_mijnafvalwijzer_nested_response_sections() -> None:
+    """MijnAfvalwijzer wraps collections and messages in response data."""
+    assert response_items({"response": "OK", "data": [{"date": "2026-12-24"}]}) == [{"date": "2026-12-24"}]
+    assert response_items({"response": "NOK", "data": []}) == []
+    collection = collection_from_item({"nameType": "pmd", "type": "gkbp", "date": "2026-12-24"})
+
+    assert collection is not None
+    assert collection.waste_type == "pmd"
