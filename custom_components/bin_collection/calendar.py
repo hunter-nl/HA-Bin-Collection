@@ -25,10 +25,7 @@ class BinCollectionCalendar(CoordinatorEntity[BinCollectionCoordinator], Calenda
     _attr_has_entity_name = True
     _attr_translation_key = "calendar"
 
-    _LABELS = {
-        "en": {"rest": "Residual waste", "paper": "Paper", "gft": "Organic waste", "pmd": "PMD"},
-        "nl": {"rest": "Restafval", "paper": "Papier", "gft": "GFT", "pmd": "PMD"},
-    }
+    _LABELS = {"rest": "Restafval", "paper": "Papier", "gft": "GFT", "pmd": "PMD"}
 
     def __init__(self, coordinator: BinCollectionCoordinator) -> None:
         super().__init__(coordinator)
@@ -57,7 +54,8 @@ class BinCollectionCalendar(CoordinatorEntity[BinCollectionCoordinator], Calenda
 
     def _event_summary(self, waste_type: str, source_type: str) -> str:
         """Use a readable waste label and identify the provider in calendar views."""
-        language = self.coordinator.hass.config.language.split("-", maxsplit=1)[0]
-        label = self._LABELS.get(language, self._LABELS["en"]).get(waste_type, source_type)
+        # Calendar events are generated once on the server and cannot follow
+        # each viewer's frontend language. The supported providers are Dutch.
+        label = self._LABELS.get(waste_type, source_type)
         provider = PROVIDER_LABELS.get(self.coordinator.config_entry.data.get("provider"), "Bin Collection")
         return f"{provider}: {label}"
