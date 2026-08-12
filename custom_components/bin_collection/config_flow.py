@@ -12,6 +12,7 @@ from homeassistant.helpers.aiohttp_client import async_get_clientsession
 from homeassistant.helpers.selector import SelectSelector, SelectSelectorConfig, SelectSelectorMode
 
 from .const import (
+    CANONICAL_WASTE_TYPES,
     CONF_ADDITION,
     CONF_CARD_MAX_COLLECTIONS,
     CONF_DEVICE_NAME,
@@ -19,19 +20,18 @@ from .const import (
     CONF_LOG_LEVEL,
     CONF_POSTCODE,
     CONF_PROVIDER,
-    CONF_REMINDER_ENABLED,
-    CONF_REMINDER_TIME,
     CONF_SCAN_INTERVAL,
     DEFAULT_CARD_MAX_COLLECTIONS,
     DEFAULT_DEVICE_NAME,
     DEFAULT_LOG_LEVEL,
-    DEFAULT_REMINDER_ENABLED,
     DEFAULT_REMINDER_TIME,
     DEFAULT_SCAN_INTERVAL,
     DOMAIN,
     PROVIDER_ACV,
     PROVIDER_LABELS,
     PROVIDER_MIJNAFVALWIJZER,
+    reminder_enabled_key,
+    reminder_time_key,
 )
 from .providers import ProviderError, get_provider
 from .providers.acv import AcvProvider
@@ -188,22 +188,29 @@ class OptionsFlow(config_entries.OptionsFlow):
         if user_input is not None:
             return self.async_create_entry(title="", data=user_input)
         options = self.config_entry.options
-        schema = vol.Schema(
-            {
+        fields: dict[object, object] = {
+            vol.Required(CONF_SCAN_INTERVAL, default=options.get(CONF_SCAN_INTERVAL, DEFAULT_SCAN_INTERVAL)): vol.All(
+                vol.Coerce(int), vol.Range(min=1, max=24)
+            ),
+            vol.Required(CONF_LOG_LEVEL, default=options.get(CONF_LOG_LEVEL, DEFAULT_LOG_LEVEL)): vol.In(
+                ["DEBUG", "INFO", "WARNING", "ERROR"]
+            ),
+            vol.Required(
+                CONF_CARD_MAX_COLLECTIONS,
+                default=options.get(CONF_CARD_MAX_COLLECTIONS, DEFAULT_CARD_MAX_COLLECTIONS),
+            ): vol.All(vol.Coerce(int), vol.Range(min=1, max=20)),
+        }
+        for waste_type in CANONICAL_WASTE_TYPES:
+            fields[
                 vol.Required(
-                    CONF_SCAN_INTERVAL, default=options.get(CONF_SCAN_INTERVAL, DEFAULT_SCAN_INTERVAL)
-                ): vol.All(vol.Coerce(int), vol.Range(min=1, max=24)),
+                    reminder_enabled_key(waste_type), default=options.get(reminder_enabled_key(waste_type), True)
+                )
+            ] = bool
+            fields[
                 vol.Required(
-                    CONF_REMINDER_ENABLED, default=options.get(CONF_REMINDER_ENABLED, DEFAULT_REMINDER_ENABLED)
-                ): bool,
-                vol.Required(CONF_REMINDER_TIME, default=options.get(CONF_REMINDER_TIME, DEFAULT_REMINDER_TIME)): str,
-                vol.Required(CONF_LOG_LEVEL, default=options.get(CONF_LOG_LEVEL, DEFAULT_LOG_LEVEL)): vol.In(
-                    ["DEBUG", "INFO", "WARNING", "ERROR"]
-                ),
-                vol.Required(
-                    CONF_CARD_MAX_COLLECTIONS,
-                    default=options.get(CONF_CARD_MAX_COLLECTIONS, DEFAULT_CARD_MAX_COLLECTIONS),
-                ): vol.All(vol.Coerce(int), vol.Range(min=1, max=20)),
-            }
-        )
+                    reminder_time_key(waste_type),
+                    default=options.get(reminder_time_key(waste_type), DEFAULT_REMINDER_TIME),
+                )
+            ] = str
+        schema = vol.Schema(fields)
         return self.async_show_form(step_id="init", data_schema=schema)

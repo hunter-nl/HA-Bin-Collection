@@ -35,6 +35,15 @@ DEFAULT_UPDATE_INTERVAL = timedelta(hours=DEFAULT_SCAN_INTERVAL)
 
 EVENT_COLLECTION_REMINDER = f"{DOMAIN}.collection_reminder"
 EVENT_PROVIDER_NOTICE = f"{DOMAIN}.provider_notice"
-SERVICE_ACKNOWLEDGE_NOTICE = "acknowledge_notice"
 SERVICE_DELETE_NOTICE = "delete_notice"
 CANONICAL_WASTE_TYPES = ("rest", "paper", "gft", "pmd")
+
+
+def reminder_enabled_key(waste_type: str) -> str:
+    """Return the option key for a waste-type reminder toggle."""
+    return f"reminder_{waste_type}_enabled"
+
+
+def reminder_time_key(waste_type: str) -> str:
+    """Return the option key for a waste-type reminder time."""
+    return f"reminder_{waste_type}_time"

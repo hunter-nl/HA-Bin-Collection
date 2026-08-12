@@ -7,6 +7,10 @@ class BinCollectionCard extends HTMLElement {
     return {};
   }
 
+  static getConfigElement() {
+    return document.createElement("bin-collection-card-editor");
+  }
+
   set hass(hass) {
     this._hass = hass;
     this.render();
@@ -50,10 +54,9 @@ class BinCollectionCard extends HTMLElement {
   }
 
   _bindNoticeActions() {
-    this.querySelectorAll("button[data-action]").forEach((button) => {
+    this.querySelectorAll("button[data-action='delete']").forEach((button) => {
       button.addEventListener("click", () => {
-        const service = button.dataset.action === "delete" ? "delete_notice" : "acknowledge_notice";
-        this._hass.callService("bin_collection", service, {
+        this._hass.callService("bin_collection", "delete_notice", {
           entry_id: button.dataset.entryId,
           notice_id: button.dataset.noticeId,
         });
@@ -74,7 +77,7 @@ class BinCollectionCard extends HTMLElement {
       return;
     }
     const attrs = state.attributes;
-    const collections = (attrs.collections || []).slice(0, attrs.card_max_collections || 5);
+    const collections = (attrs.collections || []).slice(0, this.config.max_collections || attrs.card_max_collections || 5);
     const notices = [...(attrs.notices || [])].sort((left, right) =>
       (right.published || "").localeCompare(left.published || ""),
     );
@@ -101,7 +104,6 @@ class BinCollectionCard extends HTMLElement {
           <article class="notice">
             <div class="notice-copy"><strong>${this._escape(this._noticeText(notice.title))}</strong><p>${this._escape(this._noticeText(notice.body))}</p></div>
             <div class="notice-actions">
-              <button data-action="acknowledge" data-entry-id="${this._escape(attrs.entry_id)}" data-notice-id="${this._escape(notice.notice_id)}" title="Acknowledge notification" aria-label="Acknowledge notification">✓</button>
               <button data-action="delete" data-entry-id="${this._escape(attrs.entry_id)}" data-notice-id="${this._escape(notice.notice_id)}" title="Delete message" aria-label="Delete message">×</button>
             </div>
           </article>`).join("")}</section>`
@@ -120,6 +122,35 @@ class BinCollectionCard extends HTMLElement {
 
 BinCollectionCard.prototype.constructor = BinCollectionCard;
 customElements.define("bin-collection-card", BinCollectionCard);
+
+class BinCollectionCardEditor extends HTMLElement {
+  setConfig(config) {
+    this.config = config;
+    this.render();
+  }
+
+  set hass(hass) {
+    this._hass = hass;
+    this.render();
+  }
+
+  render() {
+    if (!this._hass || !this.config) return;
+    const entities = Object.entries(this._hass.states)
+      .filter(([, state]) => state.attributes.entry_id && Array.isArray(state.attributes.collections))
+      .map(([entityId, state]) => `<option value="${entityId}" ${entityId === this.config.entity ? "selected" : ""}>${state.attributes.provider || "Bin Collection"} — ${entityId}</option>`)
+      .join("");
+    this.innerHTML = `<style>:host{display:block;padding:8px 0}.field{display:grid;gap:6px;margin:10px 0}select,input{font:inherit;padding:8px;border:1px solid var(--divider-color);border-radius:4px;background:var(--card-background-color);color:var(--primary-text-color)}</style>
+      <label class="field">Provider<select id="entity"><option value="">Select a provider</option>${entities}</select></label>
+      <label class="field">Collections shown<input id="max" type="number" min="1" max="20" value="${this.config.max_collections || 5}"></label>`;
+    this.querySelectorAll("select,input").forEach((element) => element.addEventListener("change", () => {
+      const entity = this.querySelector("#entity").value;
+      const maxCollections = Number(this.querySelector("#max").value) || 5;
+      this.dispatchEvent(new CustomEvent("config-changed", { detail: { config: { ...this.config, entity, max_collections: maxCollections } }, bubbles: true, composed: true }));
+    }));
+  }
+}
+customElements.define("bin-collection-card-editor", BinCollectionCardEditor);
 window.customCards = window.customCards || [];
 window.customCards.push({
   type: "bin-collection-card",
