@@ -49,26 +49,19 @@ class MijnAfvalwijzerProvider:
 
     async def _async_request(self) -> dict[str, Any]:
         params = self._params()
-        _LOGGER.debug(
-            "Requesting MijnAfvalwijzer data with parameters: %s",
-            {key: value for key, value in params.items() if key != "apikey"},
-        )
+        _LOGGER.debug("Requesting MijnAfvalwijzer data")
         try:
             async with self._session.get(URL, params=params, timeout=ClientTimeout(total=20)) as response:
                 response.raise_for_status()
                 payload: dict[str, Any] = await response.json(content_type=None)
         except (ClientError, TimeoutError, ValueError) as err:
-            _LOGGER.warning("MijnAfvalwijzer request failed: %s", err)
+            _LOGGER.warning("MijnAfvalwijzer request failed")
             raise ProviderError("MijnAfvalwijzer is tijdelijk niet bereikbaar") from err
         raw_data = payload.get("data", {})
         if isinstance(raw_data, dict):
             _LOGGER.debug(
-                "Received raw MijnAfvalwijzer collection and notice data: %s",
-                {
-                    key: raw_data.get(key)
-                    for key in ("ophaaldagen", "mededelingen", "pushData", "notifications")
-                    if key in raw_data
-                },
+                "Received MijnAfvalwijzer response sections: %s",
+                sorted(key for key in ("ophaaldagen", "mededelingen", "pushData", "notifications") if key in raw_data),
             )
         if payload.get("response") == "NOK":
             raise ProviderError(str(payload.get("error") or "Adres niet gevonden"))

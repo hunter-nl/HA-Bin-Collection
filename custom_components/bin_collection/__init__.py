@@ -33,7 +33,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: BinCollectionConfigEntry
     """Set up Bin Collection from one config entry."""
     log_level = str(entry.options.get(CONF_LOG_LEVEL, DEFAULT_LOG_LEVEL)).upper()
     _LOGGER.setLevel(getattr(logging, log_level, logging.INFO))
-    _LOGGER.info("Setting up Bin Collection service: %s (log level: %s)", entry.title, log_level)
+    _LOGGER.info("Setting up Bin Collection service (log level: %s)", log_level)
     hass.data.setdefault(DOMAIN, {})
     await _async_register_card_resource(hass)
     coordinator = BinCollectionCoordinator(hass, entry)
@@ -45,7 +45,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: BinCollectionConfigEntry
     hass.data[DOMAIN][entry.entry_id] = {"coordinator": coordinator, "delivery": delivery}
     await hass.config_entries.async_forward_entry_setups(entry, PLATFORMS)
     entry.async_on_unload(entry.add_update_listener(_async_update_listener))
-    _LOGGER.info("Bin Collection service ready: %s", entry.title)
+    _LOGGER.info("Bin Collection service ready")
     return True
 
 
@@ -87,5 +87,5 @@ async def async_unload_entry(hass: HomeAssistant, entry: BinCollectionConfigEntr
     if unloaded:
         runtime = hass.data[DOMAIN].pop(entry.entry_id)
         await runtime["delivery"].async_unload()
-        _LOGGER.info("Unloaded Bin Collection service: %s", entry.title)
+        _LOGGER.info("Unloaded Bin Collection service")
     return unloaded
