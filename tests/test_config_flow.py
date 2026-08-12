@@ -1,5 +1,7 @@
 """Tests for the configuration flow."""
 
+import json
+
 from homeassistant.helpers import config_validation as cv
 from voluptuous_serialize import convert
 
@@ -7,10 +9,11 @@ from custom_components.bin_collection.config_flow import address_schema, normali
 
 
 def test_address_schema_is_serializable() -> None:
-    """The frontend receives a serializable configuration schema."""
+    """The frontend receives a serializable schema with a provider dropdown."""
     schema = convert(address_schema(), custom_serializer=cv.custom_serializer)
 
     assert len(schema) == 4
+    assert '"mode": "dropdown"' in json.dumps(schema)
 
 
 def test_normalize_postcode_accepts_common_input() -> None:
