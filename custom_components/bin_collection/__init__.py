@@ -11,19 +11,13 @@ from homeassistant.components.lovelace.const import CONF_RESOURCE_TYPE_WS, LOVEL
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers import config_validation as cv
-from homeassistant.helpers import device_registry as dr
 
 from .const import (
     CARD_RESOURCE_URL,
-    CONF_ADDITION,
-    CONF_HOUSE_NUMBER,
     CONF_LOG_LEVEL,
-    CONF_POSTCODE,
-    CONF_PROVIDER,
     DEFAULT_LOG_LEVEL,
     DOMAIN,
     PLATFORMS,
-    PROVIDER_LABELS,
 )
 from .coordinator import BinCollectionCoordinator
 from .notifications import DeliveryManager
@@ -37,7 +31,6 @@ CONFIG_SCHEMA = cv.config_entry_only_config_schema(DOMAIN)
 
 async def async_setup_entry(hass: HomeAssistant, entry: BinCollectionConfigEntry) -> bool:
     """Set up Bin Collection from one config entry."""
-    _async_update_legacy_entry_title(hass, entry)
     log_level = str(entry.options.get(CONF_LOG_LEVEL, DEFAULT_LOG_LEVEL)).upper()
     _LOGGER.setLevel(getattr(logging, log_level, logging.INFO))
     _LOGGER.info("Setting up Bin Collection service: %s (log level: %s)", entry.title, log_level)
@@ -51,28 +44,9 @@ async def async_setup_entry(hass: HomeAssistant, entry: BinCollectionConfigEntry
     delivery.async_schedule()
     hass.data[DOMAIN][entry.entry_id] = {"coordinator": coordinator, "delivery": delivery}
     await hass.config_entries.async_forward_entry_setups(entry, PLATFORMS)
-    _async_update_legacy_device_manufacturer(hass, entry)
     entry.async_on_unload(entry.add_update_listener(_async_update_listener))
     _LOGGER.info("Bin Collection service ready: %s", entry.title)
     return True
-
-
-def _async_update_legacy_entry_title(hass: HomeAssistant, entry: BinCollectionConfigEntry) -> None:
-    """Replace the old address-only entry title without overriding user changes."""
-    data = entry.data
-    identifier = f"{data[CONF_POSTCODE]} {data[CONF_HOUSE_NUMBER]}{data.get(CONF_ADDITION, '')}"
-    if entry.title != identifier:
-        return
-    provider_name = PROVIDER_LABELS.get(data[CONF_PROVIDER], data[CONF_PROVIDER])
-    hass.config_entries.async_update_entry(entry, title=f"{provider_name} - {identifier}")
-
-
-def _async_update_legacy_device_manufacturer(hass: HomeAssistant, entry: BinCollectionConfigEntry) -> None:
-    """Replace the old device manufacturer without overwriting user changes."""
-    registry = dr.async_get(hass)
-    device = registry.async_get_device(identifiers={(DOMAIN, entry.entry_id)})
-    if device is not None and device.manufacturer == "HA Bin Collection":
-        registry.async_update_device(device.id, manufacturer="Bin Collection")
 
 
 async def async_setup(hass: HomeAssistant, config: dict) -> bool:
