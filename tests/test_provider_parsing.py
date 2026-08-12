@@ -44,8 +44,8 @@ def test_parses_mijnafvalwijzer_nested_response_sections() -> None:
     assert collection.waste_type == "pmd"
 
 
-def test_filters_expired_mijnafvalwijzer_notices() -> None:
-    """Dated notices expire while undated notices remain available."""
+def test_filters_only_explicitly_expired_mijnafvalwijzer_notices() -> None:
+    """Published dates do not remove a message; explicit expiry does."""
     notices = active_notice_items(
         [
             {"date": "2026-08-10", "message": "Old"},
@@ -55,4 +55,8 @@ def test_filters_expired_mijnafvalwijzer_notices() -> None:
         date(2026, 8, 12),
     )
 
-    assert notices == [{"expiration_date": "2026-08-12", "text": "Current"}, {"message": "Undated"}]
+    assert notices == [
+        {"date": "2026-08-10", "message": "Old"},
+        {"expiration_date": "2026-08-12", "text": "Current"},
+        {"message": "Undated"},
+    ]

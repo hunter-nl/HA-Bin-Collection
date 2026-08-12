@@ -1,8 +1,10 @@
 class BinCollectionCard extends HTMLElement {
   setConfig(config) {
-    if (!config.entity)
-      throw new Error("Specify a Bin Collection overview entity.");
     this.config = config;
+  }
+
+  static getStubConfig() {
+    return {};
   }
 
   set hass(hass) {
@@ -11,43 +13,104 @@ class BinCollectionCard extends HTMLElement {
   }
 
   getCardSize() {
-    return 4;
+    return 6;
+  }
+
+  _escape(value) {
+    const element = document.createElement("span");
+    element.textContent = value || "";
+    return element.innerHTML;
+  }
+
+  _date(value) {
+    return new Intl.DateTimeFormat(this._language(), {
+      weekday: "short",
+      day: "numeric",
+      month: "short",
+    }).format(new Date(`${value}T12:00:00`));
+  }
+
+  _relativeDate(value) {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const pickup = new Date(`${value}T00:00:00`);
+    const days = Math.round((pickup - today) / 86400000);
+    return new Intl.RelativeTimeFormat(this._language(), { numeric: "auto" }).format(days, "day");
+  }
+
+  _language() {
+    return this._hass.locale?.language || this._hass.language || "en";
+  }
+
+  _bindNoticeActions() {
+    this.querySelectorAll("button[data-action]").forEach((button) => {
+      button.addEventListener("click", () => {
+        const service = button.dataset.action === "delete" ? "delete_notice" : "acknowledge_notice";
+        this._hass.callService("bin_collection", service, {
+          entry_id: button.dataset.entryId,
+          notice_id: button.dataset.noticeId,
+        });
+      });
+    });
   }
 
   render() {
     if (!this._hass || !this.config) return;
-    const state = this._hass.states[this.config.entity];
+    const state = this.config.entity
+      ? this._hass.states[this.config.entity]
+      : Object.values(this._hass.states).find((candidate) =>
+        candidate.attributes.entry_id && Array.isArray(candidate.attributes.collections) && Array.isArray(candidate.attributes.notices),
+      );
     if (!state) {
-      this.innerHTML = `<ha-card><div class="empty">Entity not found: ${this.config.entity}</div></ha-card>`;
+      const message = this.config.entity ? `Entity not found: ${this._escape(this.config.entity)}` : "No Bin Collection overview found";
+      this.innerHTML = `<ha-card><div class="empty">${message}</div></ha-card>`;
       return;
     }
-    const collections = (state.attributes.collections || []).slice(0, 8);
-    const notices = state.attributes.notices || [];
-    const labels = { rest: "Rest", paper: "Papier", gft: "GFT", pmd: "PMD" };
-    const icon = (type) =>
-      `<img class="bin ${type}" src="/ha_bin_collection/${{ rest: "Kliko_rest", paper: "Kliko_paper", gft: "Kliko_gft", pmd: "Kliko_pmd" }[type] || "None"}.png" alt="">`;
+    const attrs = state.attributes;
+    const collections = (attrs.collections || []).slice(0, 8);
+    const notices = [...(attrs.notices || [])].sort((left, right) =>
+      (right.published || "").localeCompare(left.published || ""),
+    );
+    const labels = (this._language().startsWith("nl")
+      ? { rest: "Restafval", paper: "Papier", gft: "GFT", pmd: "PMD" }
+      : { rest: "Residual waste", paper: "Paper", gft: "Organic waste", pmd: "PMD" });
+    const providers = { mijnafvalwijzer: "MijnAfvalwijzer", acv: "ACV" };
+    const icons = { rest: "Kliko_rest", paper: "Kliko_paper", gft: "Kliko_gft", pmd: "Kliko_pmd" };
     const rows = collections.length
-      ? collections
-          .map(
-            (item) =>
-              `<div class="pickup">${icon(item.type)}<span>${labels[item.type] || item.source_type}</span><time>${item.date}</time></div>`,
-          )
-          .join("")
-      : `<div class="empty">No upcoming collections</div>`;
-    const messages = notices
-      .map(
-        (notice) =>
-          `<div class="notice"><b>${notice.title}</b><br>${notice.body}</div>`,
-      )
-      .join("");
-    this.innerHTML = `<ha-card><style>:host{display:block}.header{display:flex;justify-content:space-between;align-items:baseline;padding:16px 16px 10px;font-size:20px;font-weight:600}.header small{font-size:12px;font-weight:400;color:var(--secondary-text-color)}.pickups{padding:0 12px 10px}.pickup{display:flex;gap:12px;align-items:center;padding:8px}.pickup time{margin-left:auto;color:var(--secondary-text-color)}.bin{width:42px;height:42px;object-fit:cover;border-radius:4px}.notice{margin:8px 16px 16px;padding:10px;border-left:4px solid var(--warning-color,#f6a700);background:var(--secondary-background-color);border-radius:4px}.empty{padding:18px;color:var(--secondary-text-color)}</style><div class="header"><span>Afval</span><small>${state.state === "none" ? "Geen komende inzameling" : `Volgende: ${state.state}`}</small></div><div class="pickups">${rows}</div>${messages}</ha-card>`;
+      ? collections.map((item) => `
+          <div class="pickup ${this._escape(item.type)}">
+            <img class="bin" src="/ha_bin_collection/${icons[item.type] || "None"}.png" alt="">
+            <div class="pickup-copy"><div>${this._escape(labels[item.type] || item.source_type)}</div><small>${this._relativeDate(item.date)}</small></div>
+            <time>${this._date(item.date)}</time>
+          </div>`).join("")
+      : '<div class="empty">No upcoming collections</div>';
+    const messages = notices.length
+      ? `<section class="notices"><h3>Provider messages</h3>${notices.map((notice) => `
+          <article class="notice">
+            <div class="notice-copy"><strong>${this._escape(notice.title)}</strong><p>${this._escape(notice.body)}</p></div>
+            <div class="notice-actions">
+              <button data-action="acknowledge" data-entry-id="${this._escape(attrs.entry_id)}" data-notice-id="${this._escape(notice.notice_id)}" title="Acknowledge notification" aria-label="Acknowledge notification">✓</button>
+              <button data-action="delete" data-entry-id="${this._escape(attrs.entry_id)}" data-notice-id="${this._escape(notice.notice_id)}" title="Delete message" aria-label="Delete message">×</button>
+            </div>
+          </article>`).join("")}</section>`
+      : "";
+    const provider = providers[attrs.provider] || "Bin Collection";
+    this.innerHTML = `<ha-card>
+      <style>
+        :host{display:block}.header{padding:18px 20px 10px;font-size:28px;line-height:1.2}.header small{display:block;margin-top:4px;font-size:13px;font-weight:400;color:var(--secondary-text-color)}.pickups{padding:0 12px 10px}.pickup{display:flex;gap:14px;align-items:center;padding:10px 8px;border-radius:8px}.pickup:hover{background:var(--secondary-background-color)}.bin{width:48px;height:48px;object-fit:cover;border-radius:50%;background:var(--primary-color)}.pickup.rest .bin{background:#8c8c8c}.pickup.paper .bin{background:#3f6ad8}.pickup.gft .bin{background:#43a047}.pickup.pmd .bin{background:#f9b928}.pickup-copy{flex:1;font-size:19px}.pickup-copy small{display:block;margin-top:3px;color:var(--primary-color);font-size:15px}.pickup time{white-space:nowrap;font-size:16px}.notices{border-top:1px solid var(--divider-color);padding:12px 16px 16px}.notices h3{margin:0 0 8px;font-size:17px}.notice{display:flex;gap:10px;margin-top:8px;padding:10px 0}.notice + .notice{border-top:1px solid var(--divider-color)}.notice-copy{flex:1}.notice p{margin:4px 0 0;white-space:pre-wrap;color:var(--secondary-text-color)}.notice-actions{display:flex;gap:4px;align-items:flex-start}.notice-actions button{border:0;border-radius:50%;width:32px;height:32px;background:transparent;color:var(--primary-text-color);font-size:20px;cursor:pointer}.notice-actions button:hover{background:var(--secondary-background-color)}.empty{padding:18px;color:var(--secondary-text-color)}
+      </style>
+      <div class="header">Next collection dates<small>${this._escape(provider)}</small></div>
+      <div class="pickups">${rows}</div>${messages}
+    </ha-card>`;
+    this._bindNoticeActions();
   }
 }
+
 BinCollectionCard.prototype.constructor = BinCollectionCard;
 customElements.define("bin-collection-card", BinCollectionCard);
 window.customCards = window.customCards || [];
 window.customCards.push({
   type: "bin-collection-card",
   name: "Bin Collection Card",
-  description: "Upcoming waste collections and collector notices.",
+  description: "Upcoming waste collections and provider messages.",
 });

@@ -9,7 +9,7 @@ from typing import Any
 from aiohttp import ClientError, ClientSession, ClientTimeout
 
 from ..models import BinCollectionData
-from .base import ProviderError, collection_from_item, notice_from_item
+from .base import ProviderError, collection_from_item, notice_from_item, notice_is_active
 
 URL = "https://api.mijnafvalwijzer.nl/webservices/appsinput/"
 API_KEY = "5ef443e778f41c4f75c69459eea6e6ae0c2d92de729aa0fc61653815fbd6a8ca"
@@ -28,21 +28,8 @@ def response_items(response: object) -> list[dict[str, Any]]:
 
 
 def active_notice_items(items: list[dict[str, Any]], today: date) -> list[dict[str, Any]]:
-    """Return notices that have not expired or become stale."""
-    active: list[dict[str, Any]] = []
-    for item in items:
-        expiry = item.get("expiration_date")
-        published = item.get("date")
-        date_value = expiry or published
-        if date_value:
-            try:
-                item_date = date.fromisoformat(str(date_value).split(" ", maxsplit=1)[0])
-            except ValueError:
-                item_date = None
-            if item_date is not None and item_date < today:
-                continue
-        active.append(item)
-    return active
+    """Return notices until the provider removes them or explicitly expires them."""
+    return [item for item in items if notice_is_active(item, today)]
 
 
 class MijnAfvalwijzerProvider:

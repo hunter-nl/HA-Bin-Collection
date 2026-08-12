@@ -13,6 +13,8 @@ from homeassistant.helpers.update_coordinator import CoordinatorEntity
 
 from .const import CANONICAL_WASTE_TYPES, CONF_DEVICE_NAME, DEFAULT_DEVICE_NAME, DOMAIN
 from .coordinator import BinCollectionCoordinator
+from .models import Notice
+from .notifications import DeliveryManager
 
 
 async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry, async_add_entities: AddEntitiesCallback) -> None:
@@ -71,14 +73,37 @@ class OverviewSensor(BinCollectionEntity, SensorEntity):
 
     @property
     def extra_state_attributes(self) -> dict[str, object]:
+        notices = self._visible_notices()
         return {
+            "entry_id": self.coordinator.config_entry.entry_id,
+            "provider": self.coordinator.config_entry.data.get("provider", ""),
             "collections": [
                 {"date": item.date.isoformat(), "type": item.waste_type, "source_type": item.source_type}
                 for item in sorted(self.coordinator.data.collections, key=lambda item: (item.date, item.waste_type))
             ],
-            "notices": [
-                {"id": item.id, "title": item.title, "body": item.body} for item in self.coordinator.data.notices
-            ],
+            "notices": [self._notice_attribute(item) for item in notices],
+        }
+
+    def _visible_notices(self) -> tuple[Notice, ...]:
+        """Return provider notices except ones locally removed by the user."""
+        delivery = self.coordinator.hass.data[DOMAIN][self.coordinator.config_entry.entry_id]["delivery"]
+        return tuple(
+            sorted(
+                (notice for notice in self.coordinator.data.notices if not delivery.is_deleted(notice)),
+                key=lambda notice: notice.published or date.min,
+                reverse=True,
+            )
+        )
+
+    @staticmethod
+    def _notice_attribute(notice: Notice) -> dict[str, str | None]:
+        """Serialize one visible notice for the dashboard card."""
+        return {
+            "id": notice.id,
+            "title": notice.title,
+            "body": notice.body,
+            "notice_id": DeliveryManager._notice_fingerprint(notice),
+            "published": notice.published.isoformat() if notice.published else None,
         }
 
 

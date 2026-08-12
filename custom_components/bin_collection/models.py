@@ -22,6 +22,7 @@ class Notice:
     id: str
     title: str
     body: str
+    published: date | None = None
 
 
 @dataclass(frozen=True, slots=True)

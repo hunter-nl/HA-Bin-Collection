@@ -21,7 +21,7 @@ from .const import (
     EVENT_PROVIDER_NOTICE,
 )
 from .coordinator import BinCollectionCoordinator
-from .models import BinCollectionData
+from .models import BinCollectionData, Notice
 
 
 class DeliveryManager:
@@ -32,15 +32,58 @@ class DeliveryManager:
         self.entry = entry
         self.coordinator = coordinator
         self._store = Store[dict[str, list[str]]](hass, 1, f"{DOMAIN}.{entry.entry_id}.delivery")
-        self._delivered: set[str] = set()
+        self._notified: set[str] = set()
+        self._acknowledged: set[str] = set()
+        self._deleted: set[str] = set()
+        self._reminded: set[str] = set()
         self._unsub_time = None
 
     async def async_load(self) -> None:
         data = await self._store.async_load() or {}
-        self._delivered = set(data.get("fingerprints", []))
+        self._notified = set(data.get("notified", []))
+        self._acknowledged = set(data.get("acknowledged", []))
+        self._deleted = set(data.get("deleted", []))
+        self._reminded = set(data.get("reminded", []))
 
     async def _async_save(self) -> None:
-        await self._store.async_save({"fingerprints": sorted(self._delivered)[-500:]})
+        await self._store.async_save(
+            {
+                "notified": sorted(self._notified)[-500:],
+                "acknowledged": sorted(self._acknowledged)[-500:],
+                "deleted": sorted(self._deleted)[-500:],
+                "reminded": sorted(self._reminded)[-500:],
+            }
+        )
+
+    def is_deleted(self, notice: Notice) -> bool:
+        """Return whether a notice was locally removed from the dashboard card."""
+        return self._notice_fingerprint(notice) in self._deleted
+
+    async def async_acknowledge_notice(self, fingerprint: str) -> None:
+        """Record acknowledgement and dismiss its persistent notification."""
+        self._acknowledged.add(fingerprint)
+        self._notified.add(fingerprint)
+        await self._async_save()
+        await self._async_dismiss_notification(fingerprint)
+        self.coordinator.async_update_listeners()
+
+    async def async_delete_notice(self, fingerprint: str) -> None:
+        """Locally hide a provider notice without changing provider data."""
+        self._deleted.add(fingerprint)
+        self._acknowledged.add(fingerprint)
+        self._notified.add(fingerprint)
+        await self._async_save()
+        await self._async_dismiss_notification(fingerprint)
+        self.coordinator.async_update_listeners()
+
+    async def _async_dismiss_notification(self, fingerprint: str) -> None:
+        """Dismiss the matching persistent notification when it exists."""
+        await self.hass.services.async_call(
+            "persistent_notification",
+            "dismiss",
+            {"notification_id": f"{DOMAIN}_{self.entry.entry_id}_notice_{fingerprint[:10]}"},
+            blocking=True,
+        )
 
     def async_schedule(self) -> None:
         if self._unsub_time:
@@ -63,19 +106,24 @@ class DeliveryManager:
     async def _async_handle_notices(self, data: BinCollectionData | None) -> None:
         if data is None:
             return
+        active = {self._notice_fingerprint(notice) for notice in data.notices}
         changed = False
+        for state in (self._notified, self._acknowledged, self._deleted):
+            before = len(state)
+            state.intersection_update(active)
+            changed |= len(state) != before
         for notice in data.notices:
-            fingerprint = self._fingerprint("notice", notice.id, notice.title, notice.body)
-            if fingerprint in self._delivered:
+            fingerprint = self._notice_fingerprint(notice)
+            if fingerprint in self._notified or fingerprint in self._acknowledged:
                 continue
-            changed = True
-            self._delivered.add(fingerprint)
             notification_id = f"{DOMAIN}_{self.entry.entry_id}_notice_{fingerprint[:10]}"
             persistent_notification.async_create(self.hass, notice.body, notice.title, notification_id)
             self.hass.bus.async_fire(
                 EVENT_PROVIDER_NOTICE,
                 {"entry_id": self.entry.entry_id, "title": notice.title, "body": notice.body},
             )
+            self._notified.add(fingerprint)
+            changed = True
         if changed:
             await self._async_save()
 
@@ -88,9 +136,9 @@ class DeliveryManager:
         if not waste_types:
             return
         fingerprint = self._fingerprint("reminder", target.isoformat(), ",".join(waste_types))
-        if fingerprint in self._delivered:
+        if fingerprint in self._reminded:
             return
-        self._delivered.add(fingerprint)
+        self._reminded.add(fingerprint)
         labels = ", ".join(item.upper() for item in waste_types)
         message = f"Morgen ({target:%d-%m-%Y}) wordt opgehaald: {labels}."
         persistent_notification.async_create(
@@ -110,3 +158,8 @@ class DeliveryManager:
     @staticmethod
     def _fingerprint(*parts: str) -> str:
         return sha256("\x1f".join(parts).encode()).hexdigest()
+
+    @classmethod
+    def _notice_fingerprint(cls, notice: Notice) -> str:
+        """Return the stable acknowledgement key for one provider notice."""
+        return cls._fingerprint("notice", notice.id, notice.title, notice.body)
