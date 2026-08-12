@@ -23,6 +23,7 @@ CATEGORY_ALIASES = {
     "groente fruit tuinafval": "gft",
     "organic": "gft",
     "pmd": "pmd",
+    "gkbp": "pmd",
     "plastic": "pmd",
     "plastic verpakkingen": "pmd",
     "plastic metal drinkkartons": "pmd",
@@ -53,7 +54,9 @@ def parse_date(value: object) -> date | None:
 def collection_from_item(item: dict[str, Any]) -> Collection | None:
     """Extract a collection from the common field names used by both APIs."""
     pickup_date = parse_date(item.get("date") or item.get("pickupDate") or item.get("dateTime"))
-    source_type = item.get("type") or item.get("description") or item.get("wasteType") or item.get("name")
+    source_type = (
+        item.get("nameType") or item.get("type") or item.get("description") or item.get("wasteType") or item.get("name")
+    )
     if pickup_date is None or not source_type:
         return None
     return Collection(pickup_date, normalize_waste_type(source_type), str(source_type))

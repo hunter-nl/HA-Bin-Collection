@@ -13,16 +13,19 @@ from homeassistant.helpers.aiohttp_client import async_get_clientsession
 from .const import (
     CONF_ADDITION,
     CONF_HOUSE_NUMBER,
+    CONF_LOG_LEVEL,
     CONF_POSTCODE,
     CONF_PROVIDER,
     CONF_REMINDER_ENABLED,
     CONF_REMINDER_TIME,
     CONF_SCAN_INTERVAL,
+    DEFAULT_LOG_LEVEL,
     DEFAULT_REMINDER_ENABLED,
     DEFAULT_REMINDER_TIME,
     DEFAULT_SCAN_INTERVAL,
     DOMAIN,
     PROVIDER_ACV,
+    PROVIDER_LABELS,
     PROVIDER_MIJNAFVALWIJZER,
 )
 from .providers import ProviderError, get_provider
@@ -35,6 +38,12 @@ def normalize_postcode(value: str) -> str:
     if not re.fullmatch(r"\d{4}[A-Z]{2}", normalized):
         raise vol.Invalid("invalid_postcode")
     return normalized
+
+
+def config_entry_title(config: dict[str, str]) -> str:
+    """Return a distinct service title for one provider/address pair."""
+    identifier = f"{config[CONF_POSTCODE]} {config[CONF_HOUSE_NUMBER]}{config.get(CONF_ADDITION, '')}"
+    return f"{PROVIDER_LABELS[config[CONF_PROVIDER]]} - {identifier}"
 
 
 def address_schema(defaults: dict[str, Any] | None = None) -> vol.Schema:
@@ -91,7 +100,7 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                         if choices:
                             user_input["address_id"] = next(iter(choices))
                     provider = get_provider(async_get_clientsession(self.hass), user_input)
-                    title = await provider.async_validate_address()
+                    await provider.async_validate_address()
                 except ProviderError:
                     errors["base"] = "cannot_connect"
                 else:
@@ -106,7 +115,7 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                         )
                     )
                     self._abort_if_unique_id_configured()
-                    return self.async_create_entry(title=title, data=user_input)
+                    return self.async_create_entry(title=config_entry_title(user_input), data=user_input)
         return self.async_show_form(step_id="user", data_schema=address_schema(user_input), errors=errors)
 
     async def async_step_acv_address(self, user_input: dict[str, Any] | None = None) -> ConfigFlowResult:
@@ -116,7 +125,7 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         if user_input is not None:
             config = {**self._pending_input, "address_id": user_input["address_id"]}
             try:
-                title = await get_provider(async_get_clientsession(self.hass), config).async_validate_address()
+                await get_provider(async_get_clientsession(self.hass), config).async_validate_address()
             except ProviderError:
                 return self.async_show_form(
                     step_id="acv_address",
@@ -129,7 +138,7 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                 )
             )
             self._abort_if_unique_id_configured()
-            return self.async_create_entry(title=title, data=config)
+            return self.async_create_entry(title=config_entry_title(config), data=config)
         return self.async_show_form(
             step_id="acv_address", data_schema=vol.Schema({vol.Required("address_id"): vol.In(self._acv_addresses)})
         )
@@ -157,6 +166,9 @@ class OptionsFlow(config_entries.OptionsFlow):
                     CONF_REMINDER_ENABLED, default=options.get(CONF_REMINDER_ENABLED, DEFAULT_REMINDER_ENABLED)
                 ): bool,
                 vol.Required(CONF_REMINDER_TIME, default=options.get(CONF_REMINDER_TIME, DEFAULT_REMINDER_TIME)): str,
+                vol.Required(CONF_LOG_LEVEL, default=options.get(CONF_LOG_LEVEL, DEFAULT_LOG_LEVEL)): vol.In(
+                    ["DEBUG", "INFO", "WARNING", "ERROR"]
+                ),
             }
         )
         return self.async_show_form(step_id="init", data_schema=schema)

@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import logging
+from datetime import date
 from typing import Any
 
 from aiohttp import ClientError, ClientSession, ClientTimeout
@@ -11,6 +13,18 @@ from .base import ProviderError, collection_from_item, notice_from_item
 
 URL = "https://api.mijnafvalwijzer.nl/webservices/appsinput/"
 API_KEY = "5ef443e778f41c4f75c69459eea6e6ae0c2d92de729aa0fc61653815fbd6a8ca"
+
+_LOGGER = logging.getLogger(__name__)
+
+
+def response_items(response: object) -> list[dict[str, Any]]:
+    """Extract list items from a MijnAfvalwijzer response section."""
+    if isinstance(response, list):
+        return [item for item in response if isinstance(item, dict)]
+    if not isinstance(response, dict):
+        return []
+    items = response.get("data", [])
+    return [item for item in items if isinstance(item, dict)] if isinstance(items, list) else []
 
 
 class MijnAfvalwijzerProvider:
@@ -34,12 +48,28 @@ class MijnAfvalwijzerProvider:
         }
 
     async def _async_request(self) -> dict[str, Any]:
+        params = self._params()
+        _LOGGER.debug(
+            "Requesting MijnAfvalwijzer data with parameters: %s",
+            {key: value for key, value in params.items() if key != "apikey"},
+        )
         try:
-            async with self._session.get(URL, params=self._params(), timeout=ClientTimeout(total=20)) as response:
+            async with self._session.get(URL, params=params, timeout=ClientTimeout(total=20)) as response:
                 response.raise_for_status()
                 payload: dict[str, Any] = await response.json(content_type=None)
         except (ClientError, TimeoutError, ValueError) as err:
+            _LOGGER.warning("MijnAfvalwijzer request failed: %s", err)
             raise ProviderError("MijnAfvalwijzer is tijdelijk niet bereikbaar") from err
+        raw_data = payload.get("data", {})
+        if isinstance(raw_data, dict):
+            _LOGGER.debug(
+                "Received raw MijnAfvalwijzer collection and notice data: %s",
+                {
+                    key: raw_data.get(key)
+                    for key in ("ophaaldagen", "mededelingen", "pushData", "notifications")
+                    if key in raw_data
+                },
+            )
         if payload.get("response") == "NOK":
             raise ProviderError(str(payload.get("error") or "Adres niet gevonden"))
         return payload
@@ -51,8 +81,21 @@ class MijnAfvalwijzerProvider:
     async def async_fetch(self) -> BinCollectionData:
         payload = await self._async_request()
         data = payload.get("data", payload)
-        days = data.get("ophaaldagen", data.get("collections", data.get("data", []))) if isinstance(data, dict) else []
-        messages = data.get("notifications", data.get("messages", [])) if isinstance(data, dict) else []
-        collections = tuple(filter(None, (collection_from_item(item) for item in days if isinstance(item, dict))))
-        notices = tuple(filter(None, (notice_from_item(item) for item in messages if isinstance(item, dict))))
+        if not isinstance(data, dict):
+            return BinCollectionData((), ())
+        days = response_items(data.get("ophaaldagen", data.get("collections", data.get("data", []))))
+        messages = [
+            item
+            for section in (data.get("mededelingen"), data.get("pushData"), data.get("notifications"))
+            for item in response_items(section)
+        ]
+        collections = tuple(
+            collection
+            for item in days
+            if (collection := collection_from_item(item)) is not None and collection.date >= date.today()
+        )
+        notices = tuple(filter(None, (notice_from_item(item) for item in messages)))
+        _LOGGER.debug(
+            "Parsed MijnAfvalwijzer response into %d collections and %d notices", len(collections), len(notices)
+        )
         return BinCollectionData(collections, notices)

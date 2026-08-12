@@ -33,8 +33,19 @@ class BinCollectionCoordinator(DataUpdateCoordinator[BinCollectionData]):
         )
 
     async def _async_update_data(self) -> BinCollectionData:
+        _LOGGER.info("Fetching collection data for %s", self.config_entry.title)
         provider = get_provider(async_get_clientsession(self.hass), dict(self.config_entry.data))
         try:
-            return await provider.async_fetch()
+            data = await provider.async_fetch()
         except ProviderError as err:
+            _LOGGER.warning("Could not fetch collection data for %s: %s", self.config_entry.title, err)
             raise UpdateFailed(str(err)) from err
+        _LOGGER.info(
+            "Received collection data for %s: %d collections, %d notices",
+            self.config_entry.title,
+            len(data.collections),
+            len(data.notices),
+        )
+        if not data.collections:
+            _LOGGER.warning("No collection dates were returned for %s", self.config_entry.title)
+        return data

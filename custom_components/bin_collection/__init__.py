@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import logging
 from pathlib import Path
 from typing import Any, cast
 
@@ -11,17 +12,34 @@ from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers import config_validation as cv
 
-from .const import CARD_RESOURCE_URL, DOMAIN, PLATFORMS
+from .const import (
+    CARD_RESOURCE_URL,
+    CONF_ADDITION,
+    CONF_HOUSE_NUMBER,
+    CONF_LOG_LEVEL,
+    CONF_POSTCODE,
+    CONF_PROVIDER,
+    DEFAULT_LOG_LEVEL,
+    DOMAIN,
+    PLATFORMS,
+    PROVIDER_LABELS,
+)
 from .coordinator import BinCollectionCoordinator
 from .notifications import DeliveryManager
 
 type BinCollectionConfigEntry = ConfigEntry[BinCollectionCoordinator]
+
+_LOGGER = logging.getLogger(__package__)
 
 CONFIG_SCHEMA = cv.config_entry_only_config_schema(DOMAIN)
 
 
 async def async_setup_entry(hass: HomeAssistant, entry: BinCollectionConfigEntry) -> bool:
     """Set up Bin Collection from one config entry."""
+    _async_update_legacy_entry_title(hass, entry)
+    log_level = str(entry.options.get(CONF_LOG_LEVEL, DEFAULT_LOG_LEVEL)).upper()
+    _LOGGER.setLevel(getattr(logging, log_level, logging.INFO))
+    _LOGGER.info("Setting up Bin Collection service: %s (log level: %s)", entry.title, log_level)
     hass.data.setdefault(DOMAIN, {})
     await _async_register_card_resource(hass)
     coordinator = BinCollectionCoordinator(hass, entry)
@@ -33,7 +51,18 @@ async def async_setup_entry(hass: HomeAssistant, entry: BinCollectionConfigEntry
     hass.data[DOMAIN][entry.entry_id] = {"coordinator": coordinator, "delivery": delivery}
     await hass.config_entries.async_forward_entry_setups(entry, PLATFORMS)
     entry.async_on_unload(entry.add_update_listener(_async_update_listener))
+    _LOGGER.info("Bin Collection service ready: %s", entry.title)
     return True
+
+
+def _async_update_legacy_entry_title(hass: HomeAssistant, entry: BinCollectionConfigEntry) -> None:
+    """Replace the old address-only entry title without overriding user changes."""
+    data = entry.data
+    identifier = f"{data[CONF_POSTCODE]} {data[CONF_HOUSE_NUMBER]}{data.get(CONF_ADDITION, '')}"
+    if entry.title != identifier:
+        return
+    provider_name = PROVIDER_LABELS.get(data[CONF_PROVIDER], data[CONF_PROVIDER])
+    hass.config_entries.async_update_entry(entry, title=f"{provider_name} - {identifier}")
 
 
 async def async_setup(hass: HomeAssistant, config: dict) -> bool:
@@ -74,4 +103,5 @@ async def async_unload_entry(hass: HomeAssistant, entry: BinCollectionConfigEntr
     if unloaded:
         runtime = hass.data[DOMAIN].pop(entry.entry_id)
         await runtime["delivery"].async_unload()
+        _LOGGER.info("Unloaded Bin Collection service: %s", entry.title)
     return unloaded

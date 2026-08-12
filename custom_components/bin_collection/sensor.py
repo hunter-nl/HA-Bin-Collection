@@ -33,7 +33,7 @@ class BinCollectionEntity(CoordinatorEntity[BinCollectionCoordinator]):
     def device_info(self) -> DeviceInfo:
         return DeviceInfo(
             identifiers={(DOMAIN, self.coordinator.config_entry.entry_id)},
-            name=self.coordinator.config_entry.title,
+            name="Bin Collection",
             manufacturer="HA Bin Collection",
         )
 
