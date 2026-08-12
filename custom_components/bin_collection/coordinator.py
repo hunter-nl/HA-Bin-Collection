@@ -38,7 +38,7 @@ class BinCollectionCoordinator(DataUpdateCoordinator[BinCollectionData]):
         try:
             data = await provider.async_fetch()
         except ProviderError as err:
-            _LOGGER.warning("Could not fetch collection data")
+            _LOGGER.error("Could not fetch collection data")
             raise UpdateFailed(str(err)) from err
         _LOGGER.info(
             "Received collection data: %d collections, %d notices",

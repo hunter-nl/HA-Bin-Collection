@@ -7,7 +7,7 @@ from custom_components.bin_collection.providers.base import (
     normalize_waste_type,
     notice_from_item,
 )
-from custom_components.bin_collection.providers.mijnafvalwijzer import response_items
+from custom_components.bin_collection.providers.mijnafvalwijzer import active_notice_items, response_items
 
 
 def test_normalizes_required_categories_and_keeps_unknown_type() -> None:
@@ -42,3 +42,17 @@ def test_parses_mijnafvalwijzer_nested_response_sections() -> None:
 
     assert collection is not None
     assert collection.waste_type == "pmd"
+
+
+def test_filters_expired_mijnafvalwijzer_notices() -> None:
+    """Dated notices expire while undated notices remain available."""
+    notices = active_notice_items(
+        [
+            {"date": "2026-08-10", "message": "Old"},
+            {"expiration_date": "2026-08-12", "text": "Current"},
+            {"message": "Undated"},
+        ],
+        date(2026, 8, 12),
+    )
+
+    assert notices == [{"expiration_date": "2026-08-12", "text": "Current"}, {"message": "Undated"}]

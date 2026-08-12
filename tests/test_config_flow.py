@@ -5,6 +5,7 @@ import json
 from homeassistant.helpers import config_validation as cv
 from voluptuous_serialize import convert
 
+from custom_components.bin_collection import effective_log_level
 from custom_components.bin_collection.config_flow import (
     address_schema,
     config_entry_title,
@@ -39,3 +40,9 @@ def test_next_device_name_adds_an_index_for_additional_services() -> None:
     assert next_device_name(set()) == "Bin Collection"
     assert next_device_name({"Bin Collection"}) == "Bin Collection 2"
     assert next_device_name({"Bin Collection", "Bin Collection 2"}) == "Bin Collection 3"
+
+
+def test_uses_the_most_verbose_integration_log_level() -> None:
+    """Multiple services cannot make logging depend on setup order."""
+    assert effective_log_level(["ERROR", "INFO"]) == "INFO"
+    assert effective_log_level(["WARNING", "DEBUG"]) == "DEBUG"

@@ -40,7 +40,7 @@ class AcvProvider:
                 response.raise_for_status()
                 payload: Any = await response.json(content_type=None)
         except (ClientError, TimeoutError, ValueError) as err:
-            _LOGGER.warning("ACV address request failed")
+            _LOGGER.error("ACV address request failed")
             raise ProviderError("ACV is tijdelijk niet bereikbaar") from err
         result = payload.get("dataList", payload.get("data", [])) if isinstance(payload, dict) else payload
         if not isinstance(result, list) or not result:
@@ -78,7 +78,7 @@ class AcvProvider:
                 response.raise_for_status()
                 payload: Any = await response.json(content_type=None)
         except (ClientError, TimeoutError, ValueError) as err:
-            _LOGGER.warning("ACV calendar request failed")
+            _LOGGER.error("ACV calendar request failed")
             raise ProviderError("ACV-kalender is tijdelijk niet bereikbaar") from err
         data = payload.get("data", payload) if isinstance(payload, dict) else payload
         items = data.get("items", data.get("calendar", data.get("dataList", []))) if isinstance(data, dict) else data
