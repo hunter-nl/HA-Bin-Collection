@@ -30,6 +30,7 @@ type BinCollectionConfigEntry = ConfigEntry[BinCollectionCoordinator]
 _LOGGER = logging.getLogger(__package__)
 
 _LOG_LEVELS = {"DEBUG": logging.DEBUG, "INFO": logging.INFO, "WARNING": logging.WARNING, "ERROR": logging.ERROR}
+_LEGACY_CARD_RESOURCE_PATH = "/bin_collection/bin-collection-card.js"
 
 CONFIG_SCHEMA = cv.config_entry_only_config_schema(DOMAIN)
 
@@ -104,9 +105,20 @@ async def _async_register_card_resource(hass: HomeAssistant) -> None:
         return
     resources = cast(Any, lovelace.resources)
     existing = resources.async_items()
-    if any(resource.get("url", "").split("?", 1)[0] == CARD_RESOURCE_URL.split("?", 1)[0] for resource in existing):
+    resource_path = CARD_RESOURCE_URL.split("?", 1)[0]
+    if any(resource.get("url", "").split("?", 1)[0] == resource_path for resource in existing):
         return
     if not hasattr(resources, "async_create_item"):
+        return
+    legacy_resource = next(
+        (resource for resource in existing if resource.get("url", "").split("?", 1)[0] == _LEGACY_CARD_RESOURCE_PATH),
+        None,
+    )
+    if legacy_resource is not None and legacy_resource.get("id"):
+        await resources.async_update_item(
+            legacy_resource["id"], {"url": CARD_RESOURCE_URL, CONF_RESOURCE_TYPE_WS: "module"}
+        )
+        _LOGGER.info("Updated legacy Bin Collection dashboard card resource")
         return
     await resources.async_create_item({"url": CARD_RESOURCE_URL, CONF_RESOURCE_TYPE_WS: "module"})
 

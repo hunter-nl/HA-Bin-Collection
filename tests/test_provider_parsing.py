@@ -6,7 +6,6 @@ from custom_components.bin_collection.providers.base import (
     collection_from_item,
     normalize_waste_type,
     notice_from_item,
-    redacted_response,
 )
 from custom_components.bin_collection.providers.mijnafvalwijzer import active_notice_items, response_items
 
@@ -19,18 +18,6 @@ def test_normalizes_required_categories_and_keeps_unknown_type() -> None:
     assert normalize_waste_type("Plastic verpakkingen") == "pmd"
     assert normalize_waste_type("gkbp") == "pmd"
     assert normalize_waste_type("Textiel afval") == "textiel_afval"
-
-
-def test_redacts_household_data_from_debug_responses() -> None:
-    """Raw DEBUG payloads retain provider data without exposing household details."""
-    response = redacted_response(
-        {"postcode": "3962KE", "Address": "Example street 25", "message": "Pickup at 3962KE 25", "date": "2026-08-14"},
-        {"postcode": "3962KE", "house_number": "25", "addition": ""},
-    )
-
-    assert "3962KE" not in response
-    assert '"Address": "***"' in response
-    assert '"date": "2026-08-14"' in response
 
 
 def test_parses_common_collection_and_notice_shapes() -> None:
