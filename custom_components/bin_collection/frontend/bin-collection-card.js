@@ -137,17 +137,26 @@ class BinCollectionCardEditor extends HTMLElement {
   render() {
     if (!this._hass || !this.config) return;
     const entities = Object.entries(this._hass.states)
-      .filter(([, state]) => state.attributes.entry_id && Array.isArray(state.attributes.collections))
-      .map(([entityId, state]) => `<option value="${entityId}" ${entityId === this.config.entity ? "selected" : ""}>${state.attributes.provider || "Bin Collection"} — ${entityId}</option>`)
+      .filter(([entityId, state]) =>
+        state.attributes.entry_id
+        && (Object.hasOwn(state.attributes, "collections") || entityId.endsWith("_overview")),
+      );
+    const selectedEntity = this.config.entity || entities[0]?.[0] || "";
+    const options = entities
+      .map(([entityId, state]) => `<option value="${entityId}" ${entityId === selectedEntity ? "selected" : ""}>${state.attributes.provider || "Bin Collection"} — ${entityId}</option>`)
       .join("");
     this.innerHTML = `<style>:host{display:block;padding:8px 0}.field{display:grid;gap:6px;margin:10px 0}select,input{font:inherit;padding:8px;border:1px solid var(--divider-color);border-radius:4px;background:var(--card-background-color);color:var(--primary-text-color)}</style>
-      <label class="field">Provider<select id="entity"><option value="">Select a provider</option>${entities}</select></label>
+      <label class="field">Provider<select id="entity"><option value="">Select a provider</option>${options}</select></label>
       <label class="field">Collections shown<input id="max" type="number" min="1" max="20" value="${this.config.max_collections || 5}"></label>`;
-    this.querySelectorAll("select,input").forEach((element) => element.addEventListener("change", () => {
+    const updateConfig = () => {
       const entity = this.querySelector("#entity").value;
       const maxCollections = Number(this.querySelector("#max").value) || 5;
       this.dispatchEvent(new CustomEvent("config-changed", { detail: { config: { ...this.config, entity, max_collections: maxCollections } }, bubbles: true, composed: true }));
-    }));
+    };
+    this.querySelectorAll("select,input").forEach((element) => {
+      element.addEventListener("change", updateConfig);
+      element.addEventListener("input", updateConfig);
+    });
   }
 }
 customElements.define("bin-collection-card-editor", BinCollectionCardEditor);
