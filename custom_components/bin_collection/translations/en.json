@@ -32,7 +32,6 @@
         "data": {
           "scan_interval": "Refresh interval (hours)",
           "log_level": "Integration log level (most verbose setting wins)",
-          "card_max_collections": "Default collections shown on the dashboard card",
           "reminder_rest_enabled": "Residual waste reminder (day before collection)",
           "reminder_rest_time": "Residual waste reminder time (day before, HH:MM:SS)",
           "reminder_paper_enabled": "Paper reminder (day before collection)",

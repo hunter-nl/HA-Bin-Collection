@@ -14,14 +14,12 @@ from homeassistant.helpers.selector import SelectSelector, SelectSelectorConfig,
 from .const import (
     CANONICAL_WASTE_TYPES,
     CONF_ADDITION,
-    CONF_CARD_MAX_COLLECTIONS,
     CONF_DEVICE_NAME,
     CONF_HOUSE_NUMBER,
     CONF_LOG_LEVEL,
     CONF_POSTCODE,
     CONF_PROVIDER,
     CONF_SCAN_INTERVAL,
-    DEFAULT_CARD_MAX_COLLECTIONS,
     DEFAULT_DEVICE_NAME,
     DEFAULT_LOG_LEVEL,
     DEFAULT_REMINDER_TIME,
@@ -195,10 +193,6 @@ class OptionsFlow(config_entries.OptionsFlow):
             vol.Required(CONF_LOG_LEVEL, default=options.get(CONF_LOG_LEVEL, DEFAULT_LOG_LEVEL)): vol.In(
                 ["DEBUG", "INFO", "WARNING", "ERROR"]
             ),
-            vol.Required(
-                CONF_CARD_MAX_COLLECTIONS,
-                default=options.get(CONF_CARD_MAX_COLLECTIONS, DEFAULT_CARD_MAX_COLLECTIONS),
-            ): vol.All(vol.Coerce(int), vol.Range(min=1, max=20)),
         }
         for waste_type in CANONICAL_WASTE_TYPES:
             fields[

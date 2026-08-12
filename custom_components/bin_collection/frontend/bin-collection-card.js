@@ -77,7 +77,7 @@ class BinCollectionCard extends HTMLElement {
       return;
     }
     const attrs = state.attributes;
-    const collections = (attrs.collections || []).slice(0, this.config.max_collections || attrs.card_max_collections || 5);
+    const collections = (attrs.collections || []).slice(0, this.config.max_collections || 5);
     const notices = [...(attrs.notices || [])].sort((left, right) =>
       (right.published || "").localeCompare(left.published || ""),
     );
