@@ -8,7 +8,11 @@
       },
       "acv_address": {"title": "Choose your ACV address", "data": {"address_id": "Address"}}
     },
-    "error": {"cannot_connect": "Unable to find this address or contact the collection service."},
+    "error": {
+      "cannot_connect": "Unable to find this address or contact the collection service.",
+      "invalid_house_number": "Enter a house number using digits only.",
+      "invalid_postcode": "Enter a valid Dutch postcode."
+    },
     "abort": {"unique_id_configured": "This provider and address are already configured."}
   },
   "options": {"step": {"init": {"title": "HA Bin Collection options", "data": {"scan_interval": "Refresh interval (hours)", "reminder_enabled": "Enable collection reminders", "reminder_time": "Reminder time (HH:MM:SS)"}}}},

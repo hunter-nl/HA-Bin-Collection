@@ -8,7 +8,11 @@
       },
       "acv_address": {"title": "Kies je ACV-adres", "data": {"address_id": "Adres"}}
     },
-    "error": {"cannot_connect": "Dit adres is niet gevonden of de inzamelaar is niet bereikbaar."},
+    "error": {
+      "cannot_connect": "Dit adres is niet gevonden of de inzamelaar is niet bereikbaar.",
+      "invalid_house_number": "Voer een huisnummer met alleen cijfers in.",
+      "invalid_postcode": "Voer een geldige Nederlandse postcode in."
+    },
     "abort": {"unique_id_configured": "Deze inzamelaar en dit adres zijn al ingesteld."}
   },
   "options": {"step": {"init": {"title": "HA Bin Collection opties", "data": {"scan_interval": "Verversingsinterval (uren)", "reminder_enabled": "Inzamelherinneringen inschakelen", "reminder_time": "Herinneringstijd (UU:MM:SS)"}}}},
