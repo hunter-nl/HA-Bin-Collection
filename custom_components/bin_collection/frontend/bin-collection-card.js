@@ -46,6 +46,28 @@ class BinCollectionCard extends HTMLElement {
     return this._hass.locale?.language || this._hass.language || "en";
   }
 
+  _text() {
+    return this._language().startsWith("nl")
+      ? {
+        collectionsShown: "Getoonde inzameldagen",
+        nextCollectionDates: "Volgende inzameldagen",
+        noOverview: "Geen Bin Collection-overzicht gevonden",
+        noUpcomingCollections: "Geen komende inzameldagen",
+        provider: "Inzamelaar",
+        providerMessages: "Meldingen inzamelaar",
+        selectProvider: "Selecteer een inzamelaar",
+      }
+      : {
+        collectionsShown: "Collections shown",
+        nextCollectionDates: "Next collection dates",
+        noOverview: "No Bin Collection overview found",
+        noUpcomingCollections: "No upcoming collections",
+        provider: "Provider",
+        providerMessages: "Provider messages",
+        selectProvider: "Select a provider",
+      };
+  }
+
   _noticeText(value) {
     const documentFragment = new DOMParser().parseFromString(value || "", "text/html");
     documentFragment.querySelectorAll("br").forEach((element) => element.replaceWith("\n"));
@@ -72,7 +94,7 @@ class BinCollectionCard extends HTMLElement {
         candidate.attributes.entry_id && Array.isArray(candidate.attributes.collections) && Array.isArray(candidate.attributes.notices),
       );
     if (!state) {
-      const message = this.config.entity ? `Entity not found: ${this._escape(this.config.entity)}` : "No Bin Collection overview found";
+      const message = this.config.entity ? `Entity not found: ${this._escape(this.config.entity)}` : this._text().noOverview;
       this.innerHTML = `<ha-card><div class="empty">${message}</div></ha-card>`;
       return;
     }
@@ -98,9 +120,9 @@ class BinCollectionCard extends HTMLElement {
             <div class="pickup-copy"><div>${this._escape(labels[item.type] || item.source_type)}</div><small>${this._relativeDate(item.date)}</small></div>
             <time>${this._date(item.date)}</time>
           </div>`).join("")
-      : '<div class="empty">No upcoming collections</div>';
+      : `<div class="empty">${this._text().noUpcomingCollections}</div>`;
     const messages = notices.length
-      ? `<section class="notices"><h3>Provider messages</h3>${notices.map((notice) => `
+      ? `<section class="notices"><h3>${this._text().providerMessages}</h3>${notices.map((notice) => `
           <article class="notice">
             <div class="notice-copy"><strong>${this._escape(this._noticeText(notice.title))}</strong><p>${this._escape(this._noticeText(notice.body))}</p></div>
             <div class="notice-actions">
@@ -113,7 +135,7 @@ class BinCollectionCard extends HTMLElement {
       <style>
         :host{display:block}.header{padding:18px 20px 10px;font-size:28px;line-height:1.2}.header small{display:block;margin-top:4px;font-size:13px;font-weight:400;color:var(--secondary-text-color)}.pickups{padding:0 12px 10px}.pickup{display:flex;gap:14px;align-items:center;padding:10px 8px;border-radius:8px}.pickup:hover{background:var(--secondary-background-color)}.bin{width:48px;height:48px;object-fit:contain}.pickup-copy{flex:1;font-size:19px}.pickup-copy small{display:block;margin-top:3px;color:var(--primary-color);font-size:15px}.pickup time{white-space:nowrap;font-size:16px}.notices{border-top:1px solid var(--divider-color);padding:12px 16px 16px}.notices h3{margin:0 0 8px;font-size:17px}.notice{display:flex;gap:10px;margin-top:8px;padding:10px 0}.notice + .notice{border-top:1px solid var(--divider-color)}.notice-copy{flex:1}.notice p{margin:4px 0 0;white-space:pre-wrap;color:var(--secondary-text-color)}.notice-actions{display:flex;gap:4px;align-items:flex-start}.notice-actions button{border:0;border-radius:50%;width:32px;height:32px;background:transparent;color:var(--primary-text-color);font-size:20px;cursor:pointer}.notice-actions button:hover{background:var(--secondary-background-color)}.empty{padding:18px;color:var(--secondary-text-color)}
       </style>
-      <div class="header">Next collection dates<small>${this._escape(provider)}</small></div>
+      <div class="header">${this._text().nextCollectionDates}<small>${this._escape(provider)}</small></div>
       <div class="pickups">${rows}</div>${messages}
     </ha-card>`;
     this._bindNoticeActions();
@@ -134,6 +156,20 @@ class BinCollectionCardEditor extends HTMLElement {
     this.render();
   }
 
+  _text() {
+    return (this._hass.locale?.language || this._hass.language || "en").startsWith("nl")
+      ? {
+        collectionsShown: "Getoonde inzameldagen",
+        provider: "Inzamelaar",
+        selectProvider: "Selecteer een inzamelaar",
+      }
+      : {
+        collectionsShown: "Collections shown",
+        provider: "Provider",
+        selectProvider: "Select a provider",
+      };
+  }
+
   render() {
     if (!this._hass || !this.config) return;
     const entities = Object.entries(this._hass.states)
@@ -146,8 +182,8 @@ class BinCollectionCardEditor extends HTMLElement {
       .map(([entityId, state]) => `<option value="${entityId}" ${entityId === selectedEntity ? "selected" : ""}>${state.attributes.provider || "Bin Collection"} — ${entityId}</option>`)
       .join("");
     this.innerHTML = `<style>:host{display:block;padding:8px 0}.field{display:grid;gap:6px;margin:10px 0}select,input{font:inherit;padding:8px;border:1px solid var(--divider-color);border-radius:4px;background:var(--card-background-color);color:var(--primary-text-color)}</style>
-      <label class="field">Provider<select id="entity"><option value="">Select a provider</option>${options}</select></label>
-      <label class="field">Collections shown<input id="max" type="number" min="1" max="20" value="${this.config.max_collections || 5}"></label>`;
+      <label class="field">${this._text().provider}<select id="entity"><option value="">${this._text().selectProvider}</option>${options}</select></label>
+      <label class="field">${this._text().collectionsShown}<input id="max" type="number" min="1" max="20" value="${this.config.max_collections || 5}"></label>`;
     const updateConfig = () => {
       const entity = this.querySelector("#entity").value;
       const maxCollections = Number(this.querySelector("#max").value) || 5;
