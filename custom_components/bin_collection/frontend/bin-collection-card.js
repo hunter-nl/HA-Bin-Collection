@@ -75,7 +75,12 @@ class BinCollectionCard extends HTMLElement {
       ? { rest: "Restafval", paper: "Papier", gft: "GFT", pmd: "PMD" }
       : { rest: "Residual waste", paper: "Paper", gft: "Organic waste", pmd: "PMD" });
     const providers = { mijnafvalwijzer: "MijnAfvalwijzer", acv: "ACV" };
-    const icons = { rest: "Kliko_rest", paper: "Kliko_paper", gft: "Kliko_gft", pmd: "Kliko_pmd" };
+    const icons = {
+      rest: "Kliko_rest_brand",
+      paper: "Kliko_paper_brand",
+      gft: "Kliko_gft_brand",
+      pmd: "Kliko_pmd_brand",
+    };
     const rows = collections.length
       ? collections.map((item) => `
           <div class="pickup ${this._escape(item.type)}">
@@ -97,7 +102,7 @@ class BinCollectionCard extends HTMLElement {
     const provider = providers[attrs.provider] || "Bin Collection";
     this.innerHTML = `<ha-card>
       <style>
-        :host{display:block}.header{padding:18px 20px 10px;font-size:28px;line-height:1.2}.header small{display:block;margin-top:4px;font-size:13px;font-weight:400;color:var(--secondary-text-color)}.pickups{padding:0 12px 10px}.pickup{display:flex;gap:14px;align-items:center;padding:10px 8px;border-radius:8px}.pickup:hover{background:var(--secondary-background-color)}.bin{width:48px;height:48px;object-fit:cover;border-radius:50%;background:var(--primary-color)}.pickup.rest .bin{background:#8c8c8c}.pickup.paper .bin{background:#3f6ad8}.pickup.gft .bin{background:#43a047}.pickup.pmd .bin{background:#f9b928}.pickup-copy{flex:1;font-size:19px}.pickup-copy small{display:block;margin-top:3px;color:var(--primary-color);font-size:15px}.pickup time{white-space:nowrap;font-size:16px}.notices{border-top:1px solid var(--divider-color);padding:12px 16px 16px}.notices h3{margin:0 0 8px;font-size:17px}.notice{display:flex;gap:10px;margin-top:8px;padding:10px 0}.notice + .notice{border-top:1px solid var(--divider-color)}.notice-copy{flex:1}.notice p{margin:4px 0 0;white-space:pre-wrap;color:var(--secondary-text-color)}.notice-actions{display:flex;gap:4px;align-items:flex-start}.notice-actions button{border:0;border-radius:50%;width:32px;height:32px;background:transparent;color:var(--primary-text-color);font-size:20px;cursor:pointer}.notice-actions button:hover{background:var(--secondary-background-color)}.empty{padding:18px;color:var(--secondary-text-color)}
+        :host{display:block}.header{padding:18px 20px 10px;font-size:28px;line-height:1.2}.header small{display:block;margin-top:4px;font-size:13px;font-weight:400;color:var(--secondary-text-color)}.pickups{padding:0 12px 10px}.pickup{display:flex;gap:14px;align-items:center;padding:10px 8px;border-radius:8px}.pickup:hover{background:var(--secondary-background-color)}.bin{width:72px;height:48px;object-fit:contain}.pickup-copy{flex:1;font-size:19px}.pickup-copy small{display:block;margin-top:3px;color:var(--primary-color);font-size:15px}.pickup time{white-space:nowrap;font-size:16px}.notices{border-top:1px solid var(--divider-color);padding:12px 16px 16px}.notices h3{margin:0 0 8px;font-size:17px}.notice{display:flex;gap:10px;margin-top:8px;padding:10px 0}.notice + .notice{border-top:1px solid var(--divider-color)}.notice-copy{flex:1}.notice p{margin:4px 0 0;white-space:pre-wrap;color:var(--secondary-text-color)}.notice-actions{display:flex;gap:4px;align-items:flex-start}.notice-actions button{border:0;border-radius:50%;width:32px;height:32px;background:transparent;color:var(--primary-text-color);font-size:20px;cursor:pointer}.notice-actions button:hover{background:var(--secondary-background-color)}.empty{padding:18px;color:var(--secondary-text-color)}
       </style>
       <div class="header">Next collection dates<small>${this._escape(provider)}</small></div>
       <div class="pickups">${rows}</div>${messages}
