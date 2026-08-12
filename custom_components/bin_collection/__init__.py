@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import logging
+from collections.abc import Iterable
 from pathlib import Path
 from typing import Any, cast
 
@@ -26,14 +27,15 @@ type BinCollectionConfigEntry = ConfigEntry[BinCollectionCoordinator]
 
 _LOGGER = logging.getLogger(__package__)
 
+_LOG_LEVELS = {"DEBUG": logging.DEBUG, "INFO": logging.INFO, "WARNING": logging.WARNING, "ERROR": logging.ERROR}
+
 CONFIG_SCHEMA = cv.config_entry_only_config_schema(DOMAIN)
 
 
 async def async_setup_entry(hass: HomeAssistant, entry: BinCollectionConfigEntry) -> bool:
     """Set up Bin Collection from one config entry."""
-    log_level = str(entry.options.get(CONF_LOG_LEVEL, DEFAULT_LOG_LEVEL)).upper()
-    _LOGGER.setLevel(getattr(logging, log_level, logging.INFO))
-    _LOGGER.info("Setting up Bin Collection service (log level: %s)", log_level)
+    log_level = _set_log_level(hass)
+    _LOGGER.info("Setting up Bin Collection service (effective log level: %s)", log_level)
     hass.data.setdefault(DOMAIN, {})
     await _async_register_card_resource(hass)
     coordinator = BinCollectionCoordinator(hass, entry)
@@ -47,6 +49,23 @@ async def async_setup_entry(hass: HomeAssistant, entry: BinCollectionConfigEntry
     entry.async_on_unload(entry.add_update_listener(_async_update_listener))
     _LOGGER.info("Bin Collection service ready")
     return True
+
+
+def effective_log_level(log_levels: Iterable[str]) -> str:
+    """Return the most verbose valid integration log level."""
+    return min(
+        (level for level in log_levels if level in _LOG_LEVELS), key=_LOG_LEVELS.__getitem__, default=DEFAULT_LOG_LEVEL
+    )
+
+
+def _set_log_level(hass: HomeAssistant) -> str:
+    """Apply the deterministic integration-wide log level."""
+    log_level = effective_log_level(
+        str(entry.options.get(CONF_LOG_LEVEL, DEFAULT_LOG_LEVEL)).upper()
+        for entry in hass.config_entries.async_entries(DOMAIN)
+    )
+    _LOGGER.setLevel(_LOG_LEVELS[log_level])
+    return log_level
 
 
 async def async_setup(hass: HomeAssistant, config: dict) -> bool:

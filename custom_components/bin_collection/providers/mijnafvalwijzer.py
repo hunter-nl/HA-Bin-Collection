@@ -27,6 +27,24 @@ def response_items(response: object) -> list[dict[str, Any]]:
     return [item for item in items if isinstance(item, dict)] if isinstance(items, list) else []
 
 
+def active_notice_items(items: list[dict[str, Any]], today: date) -> list[dict[str, Any]]:
+    """Return notices that have not expired or become stale."""
+    active: list[dict[str, Any]] = []
+    for item in items:
+        expiry = item.get("expiration_date")
+        published = item.get("date")
+        date_value = expiry or published
+        if date_value:
+            try:
+                item_date = date.fromisoformat(str(date_value).split(" ", maxsplit=1)[0])
+            except ValueError:
+                item_date = None
+            if item_date is not None and item_date < today:
+                continue
+        active.append(item)
+    return active
+
+
 class MijnAfvalwijzerProvider:
     """Fetch the MijnAfvalwijzer calendar for one household."""
 
@@ -55,7 +73,7 @@ class MijnAfvalwijzerProvider:
                 response.raise_for_status()
                 payload: dict[str, Any] = await response.json(content_type=None)
         except (ClientError, TimeoutError, ValueError) as err:
-            _LOGGER.warning("MijnAfvalwijzer request failed")
+            _LOGGER.error("MijnAfvalwijzer request failed")
             raise ProviderError("MijnAfvalwijzer is tijdelijk niet bereikbaar") from err
         raw_data = payload.get("data", {})
         if isinstance(raw_data, dict):
@@ -87,7 +105,7 @@ class MijnAfvalwijzerProvider:
             for item in days
             if (collection := collection_from_item(item)) is not None and collection.date >= date.today()
         )
-        notices = tuple(filter(None, (notice_from_item(item) for item in messages)))
+        notices = tuple(filter(None, (notice_from_item(item) for item in active_notice_items(messages, date.today()))))
         _LOGGER.debug(
             "Parsed MijnAfvalwijzer response into %d collections and %d notices", len(collections), len(notices)
         )

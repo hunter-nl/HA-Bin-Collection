@@ -33,7 +33,7 @@
           "scan_interval": "Refresh interval (hours)",
           "reminder_enabled": "Enable collection reminders",
           "reminder_time": "Reminder time (HH:MM:SS)",
-          "log_level": "Log level"
+          "log_level": "Integration log level (most verbose setting wins)"
         }
       }
     }
