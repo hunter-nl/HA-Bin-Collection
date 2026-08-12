@@ -4,6 +4,33 @@ If you find this project useful, consider supporting its development:
 <a href="https://www.buymeacoffee.com/hunter.nl" target="_blank"><img src="https://cdn.buymeacoffee.com/buttons/v2/default-yellow.png" alt="Buy Me A Coffee" style="height: 60px !important;width: 217px !important;"></a>
 
 # Changelog
+## [v1.0.0-beta.1](https://github.com/hunter-nl/HA-Bin-Collection/releases/tag/v1.0.0-beta.1)
+
+
+
+
+
+
+### ❓ Miscellaneous
+
+- [## Summary](https://github.com/hunter-nl/HA-Bin-Collection/pull/6) ([#6](https://github.com/hunter-nl/HA-Bin-Collection/pull/6))
+
+
+
+
+
+### 🐛 Fixes
+
+- [Fix: serialize config flow schema](https://github.com/hunter-nl/HA-Bin-Collection/pull/5) ([#5](https://github.com/hunter-nl/HA-Bin-Collection/pull/5))
+
+- [Fix filename for HA Bin Collection](https://github.com/hunter-nl/HA-Bin-Collection/pull/4) ([#4](https://github.com/hunter-nl/HA-Bin-Collection/pull/4))
+
+
+
+
+
+
+
 ## [v0.0.1-alpha.1](https://github.com/hunter-nl/HA-Bin-Collection/releases/tag/v0.0.1-alpha.1)
 
 
@@ -35,6 +62,11 @@ If you find this project useful, consider supporting its development:
 
 
 ## ❤️ New Contributors
+
+
+* @releases-manager[bot] made their first contribution
+
+in [#3](https://github.com/hunter-nl/HA-Bin-Collection/pull/3)
 
 
 * @hunter-nl made their first contribution
