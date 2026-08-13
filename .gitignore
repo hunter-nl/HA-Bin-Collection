@@ -66,6 +66,10 @@ config/*
 # Logs
 *.log
 
+# Local provider diagnostics (may contain household and credential data)
+*-response.json
+*-response.redacted.json
+
 # Testing
 .coverage
 htmlcov/
