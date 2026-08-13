@@ -56,6 +56,7 @@ class BinCollectionCard extends HTMLElement {
         provider: "Inzamelaar",
         providerMessages: "Meldingen inzamelaar",
         selectProvider: "Selecteer een inzamelaar",
+        waitingForStartup: "Wachten tot Home Assistant is gestart…",
       }
       : {
         collectionsShown: "Collections shown",
@@ -65,6 +66,7 @@ class BinCollectionCard extends HTMLElement {
         provider: "Provider",
         providerMessages: "Provider messages",
         selectProvider: "Select a provider",
+        waitingForStartup: "Waiting for Home Assistant startup…",
       };
   }
 
@@ -94,8 +96,7 @@ class BinCollectionCard extends HTMLElement {
         candidate.attributes.entry_id && Array.isArray(candidate.attributes.collections) && Array.isArray(candidate.attributes.notices),
       );
     if (!state) {
-      const message = this.config.entity ? `Entity not found: ${this._escape(this.config.entity)}` : this._text().noOverview;
-      this.innerHTML = `<ha-card><div class="empty">${message}</div></ha-card>`;
+      this.innerHTML = `<ha-card><div class="empty">${this._text().waitingForStartup}</div></ha-card>`;
       return;
     }
     const attrs = state.attributes;
