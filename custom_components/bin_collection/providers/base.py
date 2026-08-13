@@ -20,13 +20,16 @@ CATEGORY_ALIASES = {
     "paper": "paper",
     "oud papier": "paper",
     "gft": "gft",
+    "green": "gft",
     "groente fruit tuinafval": "gft",
     "organic": "gft",
     "pmd": "pmd",
+    "packages": "pmd",
     "gkbp": "pmd",
     "plastic": "pmd",
     "plastic verpakkingen": "pmd",
     "plastic metal drinkkartons": "pmd",
+    "grey": "rest",
 }
 
 

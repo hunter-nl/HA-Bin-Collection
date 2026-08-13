@@ -90,7 +90,8 @@ class AcvProvider:
         except (ClientError, TimeoutError, ValueError) as err:
             _LOGGER.error("ACV calendar request failed (%s)", type(err).__name__)
             raise ProviderError("ACV-kalender is tijdelijk niet bereikbaar") from err
-        response_data = payload.get("data", payload) if isinstance(payload, dict) else payload
+        nested_data = payload.get("data") if isinstance(payload, dict) else None
+        response_data = nested_data if isinstance(nested_data, dict) else payload
         items = (
             response_data.get("items", response_data.get("calendar", response_data.get("dataList", [])))
             if isinstance(response_data, dict)
