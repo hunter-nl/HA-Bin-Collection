@@ -25,3 +25,9 @@ scripts/debug-provider-response.sh \
 
 The response is not written to the Home Assistant log. Review the generated
 file locally and share it only after verifying its contents.
+
+By default the output is redacted. For private investigation only, append
+`--include-sensitive` to save the complete response. The generated file is
+limited to your user account (`0600` permissions), but it can still contain an
+address, identifiers, and provider credentials. Never attach or paste this
+file into an issue, pull request, chat, or log.

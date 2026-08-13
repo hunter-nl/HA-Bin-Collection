@@ -1,4 +1,4 @@
-"""Save redacted raw provider responses for local troubleshooting."""
+"""Save raw provider responses for local troubleshooting."""
 
 from __future__ import annotations
 
@@ -136,7 +136,7 @@ async def _acv_response(session: ClientSession, config: dict[str, str]) -> dict[
 
 
 async def async_main(args: argparse.Namespace) -> None:
-    """Fetch and save raw responses with sensitive values redacted."""
+    """Fetch and save raw responses, redacted unless explicitly requested."""
     config = {
         "postcode": args.postcode.replace(" ", "").upper(),
         "house_number": args.house_number,
@@ -149,18 +149,24 @@ async def async_main(args: argparse.Namespace) -> None:
             payload = await _acv_response(session, config)
         else:
             raise ValueError(f"Provider diagnostics are not implemented for: {args.provider}")
-    output = Path(args.output or f"{args.provider}-response.redacted.json")
+    suffix = "response.json" if args.include_sensitive else "response.redacted.json"
+    output = Path(args.output or f"{args.provider}-{suffix}")
     output.parent.mkdir(parents=True, exist_ok=True)
+    output_payload = (
+        payload
+        if args.include_sensitive
+        else redacted_payload(payload, {value for value in config.values() if value} | {API_KEY})
+    )
     output.write_text(
-        json.dumps(
-            redacted_payload(payload, {value for value in config.values() if value} | {API_KEY}),
-            ensure_ascii=False,
-            indent=2,
-        ),
+        json.dumps(output_payload, ensure_ascii=False, indent=2),
         encoding="utf-8",
     )
     output.chmod(0o600)
-    print(f"Saved redacted {args.provider} response to {output}")
+    if args.include_sensitive:
+        print("WARNING: The output contains sensitive provider and household data. Do not share it.", file=sys.stderr)
+        print(f"Saved unredacted {args.provider} response to {output}")
+    else:
+        print(f"Saved redacted {args.provider} response to {output}")
 
 
 def parse_args() -> argparse.Namespace:
@@ -171,6 +177,11 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--house-number", required=True)
     parser.add_argument("--addition", default="")
     parser.add_argument("--output")
+    parser.add_argument(
+        "--include-sensitive",
+        action="store_true",
+        help="save the unredacted response locally; never share the resulting file",
+    )
     return parser.parse_args()
 
 
