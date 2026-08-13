@@ -4,7 +4,7 @@ from datetime import timedelta
 
 DOMAIN = "bin_collection"
 PLATFORMS = ["sensor", "calendar"]
-CARD_RESOURCE_URL = "/ha_bin_collection/bin-collection-card.js?v=1.0.1"
+CARD_RESOURCE_URL = "/ha_bin_collection/bin-collection-card.js?v=1.0.2"
 
 PROVIDER_MIJNAFVALWIJZER = "mijnafvalwijzer"
 PROVIDER_ACV = "acv"
