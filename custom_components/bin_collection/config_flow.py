@@ -216,9 +216,6 @@ class OptionsFlow(config_entries.OptionsFlow):
             vol.Required(CONF_SCAN_INTERVAL, default=options.get(CONF_SCAN_INTERVAL, DEFAULT_SCAN_INTERVAL)): vol.All(
                 vol.Coerce(int), vol.Range(min=1, max=24)
             ),
-            vol.Required(CONF_LOG_LEVEL, default=options.get(CONF_LOG_LEVEL, DEFAULT_LOG_LEVEL)): vol.In(
-                ["DEBUG", "INFO", "WARNING", "ERROR"]
-            ),
         }
         for waste_type in CANONICAL_WASTE_TYPES:
             fields[
@@ -232,5 +229,8 @@ class OptionsFlow(config_entries.OptionsFlow):
                     default=options.get(reminder_time_key(waste_type), DEFAULT_REMINDER_TIME),
                 )
             ] = str
+        fields[vol.Required(CONF_LOG_LEVEL, default=options.get(CONF_LOG_LEVEL, DEFAULT_LOG_LEVEL))] = SelectSelector(
+            SelectSelectorConfig(options=["DEBUG", "INFO", "WARNING", "ERROR"], mode=SelectSelectorMode.DROPDOWN)
+        )
         schema = vol.Schema(fields)
         return self.async_show_form(step_id="init", data_schema=schema)
