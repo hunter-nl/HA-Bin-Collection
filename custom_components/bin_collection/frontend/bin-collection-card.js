@@ -186,7 +186,7 @@ class BinCollectionCardEditor extends HTMLElement {
       );
     const selectedEntity = this.config.entity || entities[0]?.[0] || "";
     const options = entities
-      .map(([entityId, state]) => `<option value="${entityId}" ${entityId === selectedEntity ? "selected" : ""}>${state.attributes.service_name || "Bin Collection"} — ${entityId}</option>`)
+      .map(([entityId, state]) => `<option value="${entityId}" ${entityId === selectedEntity ? "selected" : ""}>${state.attributes.service_name || "Bin Collection"}</option>`)
       .join("");
     this.innerHTML = `<style>:host{display:block;padding:8px 0}.field{display:grid;gap:6px;margin:10px 0}select,input,button{font:inherit;padding:8px;border:1px solid var(--divider-color);border-radius:4px;background:var(--card-background-color);color:var(--primary-text-color)}button{background:var(--primary-color);border:0;color:var(--text-primary-color);cursor:pointer}</style>
       <label class="field">${this._text().provider}<select id="entity"><option value="">${this._text().selectProvider}</option>${options}</select></label>
