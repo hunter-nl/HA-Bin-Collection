@@ -8,6 +8,7 @@ from homeassistant.components.sensor import SensorDeviceClass, SensorEntity
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.device_registry import DeviceInfo
+from homeassistant.helpers.device_registry import async_get as async_get_device_registry
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
 
@@ -82,12 +83,23 @@ class OverviewSensor(BinCollectionEntity, SensorEntity):
         return {
             "entry_id": self.coordinator.config_entry.entry_id,
             "provider": self.coordinator.config_entry.data.get("provider", ""),
+            "service_name": self._service_name(),
             "collections": [
                 {"date": item.date.isoformat(), "type": item.waste_type, "source_type": item.source_type}
                 for item in sorted(self.coordinator.data.collections, key=lambda item: (item.date, item.waste_type))
             ],
             "notices": [self._notice_attribute(item) for item in notices],
         }
+
+    def _service_name(self) -> str:
+        """Return the user-selected Home Assistant device name for the card."""
+        entry = self.coordinator.config_entry
+        device = async_get_device_registry(self.coordinator.hass).async_get_device(
+            identifiers={(DOMAIN, entry.entry_id)}
+        )
+        if device is not None:
+            return device.name_by_user or device.name or str(entry.data.get(CONF_DEVICE_NAME, DEFAULT_DEVICE_NAME))
+        return str(entry.data.get(CONF_DEVICE_NAME, DEFAULT_DEVICE_NAME))
 
     def _visible_notices(self) -> tuple[Notice, ...]:
         """Return provider notices except ones locally removed by the user."""
