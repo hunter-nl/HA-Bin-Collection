@@ -4,6 +4,28 @@ If you find this project useful, consider supporting its development:
 <a href="https://www.buymeacoffee.com/hunter.nl" target="_blank"><img src="https://cdn.buymeacoffee.com/buttons/v2/default-yellow.png" alt="Buy Me A Coffee" style="height: 60px !important;width: 217px !important;"></a>
 
 # Changelog
+## [v1.0.0-beta.6](https://github.com/hunter-nl/HA-Bin-Collection/releases/tag/v1.0.0-beta.6)
+
+
+
+### ✨ Features
+
+- [Feat: add generic provider diagnostic script](https://github.com/hunter-nl/HA-Bin-Collection/pull/24) ([#24](https://github.com/hunter-nl/HA-Bin-Collection/pull/24))
+
+
+
+
+
+### 🐛 Fixes
+
+- [Fix: persist card editor changes](https://github.com/hunter-nl/HA-Bin-Collection/pull/23) ([#23](https://github.com/hunter-nl/HA-Bin-Collection/pull/23))
+
+
+
+
+
+
+
 ## [v1.0.0-beta.5](https://github.com/hunter-nl/HA-Bin-Collection/releases/tag/v1.0.0-beta.5)
 
 
