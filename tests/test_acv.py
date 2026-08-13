@@ -46,7 +46,14 @@ async def _test_acv_uses_current_ximmio_post_endpoints() -> None:
     session = _Session(
         [
             {"dataList": [{"UniqueId": "address-1", "Community": "ACV", "Address": "Example"}]},
-            {"dataList": [{"_pickupTypeText": "GFT", "pickupDates": ["2026-08-14T00:00:00"]}]},
+            {
+                "data": None,
+                "dataList": [
+                    {"_pickupTypeText": "GREEN", "pickupDates": ["2026-08-14T00:00:00"]},
+                    {"_pickupTypeText": "PACKAGES", "pickupDates": ["2026-08-15T00:00:00"]},
+                    {"_pickupTypeText": "GREY", "pickupDates": ["2026-08-16T00:00:00"]},
+                ],
+            },
         ]
     )
     provider = AcvProvider(cast(ClientSession, session), {"postcode": "1234AB", "house_number": "1", "addition": "A"})
@@ -68,3 +75,4 @@ async def _test_acv_uses_current_ximmio_post_endpoints() -> None:
     assert session.requests[1][1]["community"] == "ACV"
     assert data.collections[0].date == date(2026, 8, 14)
     assert data.collections[0].waste_type == "gft"
+    assert [collection.waste_type for collection in data.collections] == ["gft", "pmd", "rest"]
