@@ -1,6 +1,7 @@
 class BinCollectionCard extends HTMLElement {
   setConfig(config) {
     this.config = config;
+    this.render();
   }
 
   static getStubConfig() {
@@ -43,7 +44,7 @@ class BinCollectionCard extends HTMLElement {
   }
 
   _language() {
-    return this._hass.locale?.language || this._hass.language || "en";
+    return this._hass?.locale?.language || this._hass?.language || navigator.language || "en";
   }
 
   _text() {
@@ -89,7 +90,10 @@ class BinCollectionCard extends HTMLElement {
   }
 
   render() {
-    if (!this._hass || !this.config) return;
+    if (!this.config || !this._hass?.states) {
+      this.innerHTML = `<ha-card><div class="empty">${this._text().waitingForStartup}</div></ha-card>`;
+      return;
+    }
     const state = this.config.entity
       ? this._hass.states[this.config.entity]
       : Object.values(this._hass.states).find((candidate) =>
