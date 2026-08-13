@@ -107,7 +107,6 @@ class BinCollectionCard extends HTMLElement {
     const labels = (this._language().startsWith("nl")
       ? { rest: "Restafval", paper: "Papier", gft: "GFT", pmd: "PMD" }
       : { rest: "Residual waste", paper: "Paper", gft: "Organic waste", pmd: "PMD" });
-    const providers = { mijnafvalwijzer: "MijnAfvalwijzer", acv: "ACV" };
     const icons = {
       rest: "Kliko_rest_brand",
       paper: "Kliko_paper_brand",
@@ -131,12 +130,12 @@ class BinCollectionCard extends HTMLElement {
             </div>
           </article>`).join("")}</section>`
       : "";
-    const provider = providers[attrs.provider] || "Bin Collection";
+    const serviceName = attrs.service_name || "Bin Collection";
     this.innerHTML = `<ha-card>
       <style>
         :host{display:block}.header{padding:18px 20px 10px;font-size:28px;line-height:1.2}.header small{display:block;margin-top:4px;font-size:13px;font-weight:400;color:var(--secondary-text-color)}.pickups{padding:0 12px 10px}.pickup{display:flex;gap:14px;align-items:center;padding:10px 8px;border-radius:8px}.pickup:hover{background:var(--secondary-background-color)}.bin{width:48px;height:48px;object-fit:contain}.pickup-copy{flex:1;font-size:19px}.pickup-copy small{display:block;margin-top:3px;color:var(--primary-color);font-size:15px}.pickup time{white-space:nowrap;font-size:16px}.notices{border-top:1px solid var(--divider-color);padding:12px 16px 16px}.notices h3{margin:0 0 8px;font-size:17px}.notice{display:flex;gap:10px;margin-top:8px;padding:10px 0}.notice + .notice{border-top:1px solid var(--divider-color)}.notice-copy{flex:1}.notice p{margin:4px 0 0;white-space:pre-wrap;color:var(--secondary-text-color)}.notice-actions{display:flex;gap:4px;align-items:flex-start}.notice-actions button{border:0;border-radius:50%;width:32px;height:32px;background:transparent;color:var(--primary-text-color);font-size:20px;cursor:pointer}.notice-actions button:hover{background:var(--secondary-background-color)}.empty{padding:18px;color:var(--secondary-text-color)}
       </style>
-      <div class="header">${this._text().nextCollectionDates}<small>${this._escape(provider)}</small></div>
+      <div class="header">${this._text().nextCollectionDates}<small>${this._escape(serviceName)}</small></div>
       <div class="pickups">${rows}</div>${messages}
     </ha-card>`;
     this._bindNoticeActions();
@@ -149,25 +148,28 @@ customElements.define("bin-collection-card", BinCollectionCard);
 class BinCollectionCardEditor extends HTMLElement {
   setConfig(config) {
     this.config = config;
+    this._rendered = false;
     this.render();
   }
 
   set hass(hass) {
     this._hass = hass;
-    this.render();
+    if (!this._rendered) this.render();
   }
 
   _text() {
     return (this._hass.locale?.language || this._hass.language || "en").startsWith("nl")
       ? {
         collectionsShown: "Getoonde inzameldagen",
-        provider: "Inzamelaar",
-        selectProvider: "Selecteer een inzamelaar",
+        apply: "Toepassen",
+        provider: "Service",
+        selectProvider: "Selecteer een service",
       }
       : {
         collectionsShown: "Collections shown",
-        provider: "Provider",
-        selectProvider: "Select a provider",
+        apply: "Apply",
+        provider: "Service",
+        selectProvider: "Select a service",
       };
   }
 
@@ -180,21 +182,19 @@ class BinCollectionCardEditor extends HTMLElement {
       );
     const selectedEntity = this.config.entity || entities[0]?.[0] || "";
     const options = entities
-      .map(([entityId, state]) => `<option value="${entityId}" ${entityId === selectedEntity ? "selected" : ""}>${state.attributes.provider || "Bin Collection"} — ${entityId}</option>`)
+      .map(([entityId, state]) => `<option value="${entityId}" ${entityId === selectedEntity ? "selected" : ""}>${state.attributes.service_name || "Bin Collection"} — ${entityId}</option>`)
       .join("");
-    this.innerHTML = `<style>:host{display:block;padding:8px 0}.field{display:grid;gap:6px;margin:10px 0}select,input{font:inherit;padding:8px;border:1px solid var(--divider-color);border-radius:4px;background:var(--card-background-color);color:var(--primary-text-color)}</style>
+    this.innerHTML = `<style>:host{display:block;padding:8px 0}.field{display:grid;gap:6px;margin:10px 0}select,input,button{font:inherit;padding:8px;border:1px solid var(--divider-color);border-radius:4px;background:var(--card-background-color);color:var(--primary-text-color)}button{background:var(--primary-color);border:0;color:var(--text-primary-color);cursor:pointer}</style>
       <label class="field">${this._text().provider}<select id="entity"><option value="">${this._text().selectProvider}</option>${options}</select></label>
-      <label class="field">${this._text().collectionsShown}<input id="max" type="number" min="1" max="20" value="${this.config.max_collections || 5}"></label>`;
+      <label class="field">${this._text().collectionsShown}<input id="max" type="number" min="1" max="20" value="${this.config.max_collections || 5}"></label>
+      <button id="apply" type="button">${this._text().apply}</button>`;
     const updateConfig = () => {
       const entity = this.querySelector("#entity").value;
       const maxCollections = Number(this.querySelector("#max").value) || 5;
       this.dispatchEvent(new CustomEvent("config-changed", { detail: { config: { ...this.config, entity, max_collections: maxCollections } }, bubbles: true, composed: true }));
     };
-    // Updating on every keystroke makes Home Assistant immediately call
-    // setConfig(), which replaces the editor and restores the old value.
-    this.querySelectorAll("select,input").forEach((element) => {
-      element.addEventListener("change", updateConfig);
-    });
+    this.querySelector("#apply").addEventListener("click", updateConfig);
+    this._rendered = true;
   }
 }
 customElements.define("bin-collection-card-editor", BinCollectionCardEditor);
