@@ -15,6 +15,7 @@ dev = [
   "pytest-cov>=7.1",
   "ruff>=0.16.4",
   "ty>=0.0.74",
+  "voluptuous-serialize",
 ]
 
 [tool.pytest.ini_options]
