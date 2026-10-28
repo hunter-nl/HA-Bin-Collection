@@ -27,6 +27,11 @@ from .coordinator import BinCollectionCoordinator
 from .models import BinCollectionData, Notice
 
 
+def _notification_title(service_name: str, title: str) -> str:
+    """Identify the configured collection service in a notification title."""
+    return f"{service_name}: {title}"
+
+
 class DeliveryManager:
     """Deliver new notices and one reminder for each collection date."""
 
@@ -119,10 +124,20 @@ class DeliveryManager:
             if fingerprint in self._notified:
                 continue
             notification_id = f"{DOMAIN}_{self.entry.entry_id}_notice_{fingerprint[:10]}"
-            persistent_notification.async_create(self.hass, notice.body, notice.title, notification_id)
+            persistent_notification.async_create(
+                self.hass,
+                notice.body,
+                _notification_title(self.entry.title, notice.title),
+                notification_id,
+            )
             self.hass.bus.async_fire(
                 EVENT_PROVIDER_NOTICE,
-                {"entry_id": self.entry.entry_id, "title": notice.title, "body": notice.body},
+                {
+                    "entry_id": self.entry.entry_id,
+                    "service_name": self.entry.title,
+                    "title": notice.title,
+                    "body": notice.body,
+                },
             )
             self._notified.add(fingerprint)
             changed = True
@@ -158,12 +173,16 @@ class DeliveryManager:
         labels = ", ".join(item.upper() for item in waste_types)
         message = f"Morgen ({target:%d-%m-%Y}) wordt opgehaald: {labels}."
         persistent_notification.async_create(
-            self.hass, message, "Afvalherinnering", f"{DOMAIN}_{self.entry.entry_id}_reminder_{target.isoformat()}"
+            self.hass,
+            message,
+            _notification_title(self.entry.title, "Afvalherinnering"),
+            f"{DOMAIN}_{self.entry.entry_id}_reminder_{target.isoformat()}",
         )
         self.hass.bus.async_fire(
             EVENT_COLLECTION_REMINDER,
             {
                 "entry_id": self.entry.entry_id,
+                "service_name": self.entry.title,
                 "date": target.isoformat(),
                 "waste_types": waste_types,
                 "message": message,

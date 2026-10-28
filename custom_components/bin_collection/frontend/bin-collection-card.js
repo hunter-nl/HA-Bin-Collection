@@ -147,7 +147,9 @@ class BinCollectionCard extends HTMLElement {
 }
 
 BinCollectionCard.prototype.constructor = BinCollectionCard;
-customElements.define("bin-collection-card", BinCollectionCard);
+if (!customElements.get("bin-collection-card")) {
+  customElements.define("bin-collection-card", BinCollectionCard);
+}
 
 class BinCollectionCardEditor extends HTMLElement {
   setConfig(config) {
@@ -201,10 +203,14 @@ class BinCollectionCardEditor extends HTMLElement {
     this._rendered = true;
   }
 }
-customElements.define("bin-collection-card-editor", BinCollectionCardEditor);
+if (!customElements.get("bin-collection-card-editor")) {
+  customElements.define("bin-collection-card-editor", BinCollectionCardEditor);
+}
 window.customCards = window.customCards || [];
-window.customCards.push({
-  type: "bin-collection-card",
-  name: "Bin Collection Card",
-  description: "Upcoming waste collections and provider messages.",
-});
+if (!window.customCards.some((card) => card.type === "bin-collection-card")) {
+  window.customCards.push({
+    type: "bin-collection-card",
+    name: "Bin Collection Card",
+    description: "Upcoming waste collections and provider messages.",
+  });
+}

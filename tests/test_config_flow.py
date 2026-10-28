@@ -3,7 +3,7 @@
 import json
 
 from homeassistant.helpers import config_validation as cv
-from voluptuous_serialize import convert
+from probatio.codecs.fields import to_field_list
 
 from custom_components.bin_collection import effective_log_level
 from custom_components.bin_collection.config_flow import (
@@ -16,7 +16,7 @@ from custom_components.bin_collection.config_flow import (
 
 def test_address_schema_is_serializable() -> None:
     """The frontend receives a serializable schema with a provider dropdown."""
-    schema = convert(address_schema(), custom_serializer=cv.custom_serializer)
+    schema = to_field_list(address_schema(), custom_serializer=cv.custom_serializer)
 
     assert len(schema) == 4
     assert '"mode": "dropdown"' in json.dumps(schema)
@@ -30,8 +30,8 @@ def test_normalize_postcode_accepts_common_input() -> None:
 def test_config_entry_title_identifies_the_provider_and_address() -> None:
     """Each configured service has a distinct, recognizable title."""
     assert (
-        config_entry_title({"provider": "mijnafvalwijzer", "postcode": "3962KE", "house_number": "25", "addition": ""})
-        == "MijnAfvalwijzer - 3962KE 25"
+        config_entry_title({"provider": "mijnafvalwijzer", "postcode": "0000AA", "house_number": "0", "addition": ""})
+        == "MijnAfvalwijzer - 0000AA 0"
     )
 
 

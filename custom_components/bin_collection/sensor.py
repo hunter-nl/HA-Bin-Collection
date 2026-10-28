@@ -3,10 +3,11 @@
 from __future__ import annotations
 
 from datetime import date
+from typing import override
 
 from homeassistant.components.sensor import SensorDeviceClass, SensorEntity
 from homeassistant.config_entries import ConfigEntry
-from homeassistant.core import HomeAssistant
+from homeassistant.core import HomeAssistant, callback
 from homeassistant.helpers.device_registry import DeviceInfo
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
@@ -36,9 +37,9 @@ class BinCollectionEntity(CoordinatorEntity[BinCollectionCoordinator]):
 
     _attr_has_entity_name = True
 
-    @property
-    def device_info(self) -> DeviceInfo:
-        return DeviceInfo(
+    def __init__(self, coordinator: BinCollectionCoordinator) -> None:
+        super().__init__(coordinator)
+        self._attr_device_info = DeviceInfo(
             identifiers={(DOMAIN, self.coordinator.config_entry.entry_id)},
             name=self.coordinator.config_entry.data.get(CONF_DEVICE_NAME, DEFAULT_DEVICE_NAME),
             manufacturer="Bin Collection",
@@ -55,11 +56,17 @@ class WasteSensor(BinCollectionEntity, SensorEntity):
         self._waste_type = waste_type
         self._attr_translation_key = waste_type
         self._attr_unique_id = f"{coordinator.config_entry.entry_id}_{waste_type}"
+        self._update_state()
 
-    @property
-    def native_value(self) -> date | None:
+    def _update_state(self) -> None:
         dates = [item.date for item in self.coordinator.data.collections if item.waste_type == self._waste_type]
-        return min(dates) if dates else None
+        self._attr_native_value = min(dates) if dates else None
+
+    @callback
+    @override
+    def _handle_coordinator_update(self) -> None:
+        self._update_state()
+        super()._handle_coordinator_update()
 
 
 class OverviewSensor(BinCollectionEntity, SensorEntity):
@@ -70,16 +77,13 @@ class OverviewSensor(BinCollectionEntity, SensorEntity):
     def __init__(self, coordinator: BinCollectionCoordinator) -> None:
         super().__init__(coordinator)
         self._attr_unique_id = f"{coordinator.config_entry.entry_id}_overview"
+        self._update_state()
 
-    @property
-    def native_value(self) -> str:
+    def _update_state(self) -> None:
         upcoming = sorted(self.coordinator.data.collections, key=lambda item: item.date)
-        return upcoming[0].date.isoformat() if upcoming else "none"
-
-    @property
-    def extra_state_attributes(self) -> dict[str, object]:
+        self._attr_native_value = upcoming[0].date.isoformat() if upcoming else "none"
         notices = self._visible_notices()
-        return {
+        self._attr_extra_state_attributes = {
             "entry_id": self.coordinator.config_entry.entry_id,
             "provider": self.coordinator.config_entry.data.get("provider", ""),
             "service_name": self.coordinator.config_entry.title,
@@ -89,6 +93,12 @@ class OverviewSensor(BinCollectionEntity, SensorEntity):
             ],
             "notices": [self._notice_attribute(item) for item in notices],
         }
+
+    @callback
+    @override
+    def _handle_coordinator_update(self) -> None:
+        self._update_state()
+        super()._handle_coordinator_update()
 
     def _visible_notices(self) -> tuple[Notice, ...]:
         """Return provider notices except ones locally removed by the user."""
@@ -121,15 +131,18 @@ class NotificationsSensor(BinCollectionEntity, SensorEntity):
     def __init__(self, coordinator: BinCollectionCoordinator) -> None:
         super().__init__(coordinator)
         self._attr_unique_id = f"{coordinator.config_entry.entry_id}_notifications"
+        self._update_state()
 
-    @property
-    def native_value(self) -> int:
-        return len(self.coordinator.data.notices)
-
-    @property
-    def extra_state_attributes(self) -> dict[str, object]:
-        return {
+    def _update_state(self) -> None:
+        self._attr_native_value = len(self.coordinator.data.notices)
+        self._attr_extra_state_attributes = {
             "notices": [
                 {"id": item.id, "title": item.title, "body": item.body} for item in self.coordinator.data.notices
             ]
         }
+
+    @callback
+    @override
+    def _handle_coordinator_update(self) -> None:
+        self._update_state()
+        super()._handle_coordinator_update()
