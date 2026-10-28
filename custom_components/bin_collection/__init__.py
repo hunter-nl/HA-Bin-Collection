@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import asyncio
 import logging
 from collections.abc import Iterable
 from pathlib import Path
@@ -31,6 +32,7 @@ _LOGGER = logging.getLogger(__package__)
 
 _LOG_LEVELS = {"DEBUG": logging.DEBUG, "INFO": logging.INFO, "WARNING": logging.WARNING, "ERROR": logging.ERROR}
 _LEGACY_CARD_RESOURCE_PATH = "/bin_collection/bin-collection-card.js"
+_CARD_RESOURCE_LOCK = "card_resource_lock"
 
 CONFIG_SCHEMA = cv.config_entry_only_config_schema(DOMAIN)
 
@@ -100,27 +102,33 @@ async def _async_register_card_resource(hass: HomeAssistant) -> None:
     Integrations must not alter YAML-mode resources. Storage-mode dashboards are
     safe to update through Home Assistant's resource collection.
     """
-    lovelace = hass.data.get(LOVELACE_DATA)
-    if lovelace is None:
-        return
-    resources = cast(Any, lovelace.resources)
-    existing = resources.async_items()
-    resource_path = CARD_RESOURCE_URL.split("?", 1)[0]
-    if any(resource.get("url", "").split("?", 1)[0] == resource_path for resource in existing):
-        return
-    if not hasattr(resources, "async_create_item"):
-        return
-    legacy_resource = next(
-        (resource for resource in existing if resource.get("url", "").split("?", 1)[0] == _LEGACY_CARD_RESOURCE_PATH),
-        None,
-    )
-    if legacy_resource is not None and legacy_resource.get("id"):
-        await resources.async_update_item(
-            legacy_resource["id"], {"url": CARD_RESOURCE_URL, CONF_RESOURCE_TYPE_WS: "module"}
+    lock = hass.data.setdefault(DOMAIN, {}).setdefault(_CARD_RESOURCE_LOCK, asyncio.Lock())
+    async with lock:
+        lovelace = hass.data.get(LOVELACE_DATA)
+        if lovelace is None:
+            return
+        resources = cast(Any, lovelace.resources)
+        existing = resources.async_items()
+        resource_path = CARD_RESOURCE_URL.split("?", 1)[0]
+        if any(resource.get("url", "").split("?", 1)[0] == resource_path for resource in existing):
+            return
+        if not hasattr(resources, "async_create_item"):
+            return
+        legacy_resource = next(
+            (
+                resource
+                for resource in existing
+                if resource.get("url", "").split("?", 1)[0] == _LEGACY_CARD_RESOURCE_PATH
+            ),
+            None,
         )
-        _LOGGER.info("Updated legacy Bin Collection dashboard card resource")
-        return
-    await resources.async_create_item({"url": CARD_RESOURCE_URL, CONF_RESOURCE_TYPE_WS: "module"})
+        if legacy_resource is not None and legacy_resource.get("id"):
+            await resources.async_update_item(
+                legacy_resource["id"], {"url": CARD_RESOURCE_URL, CONF_RESOURCE_TYPE_WS: "module"}
+            )
+            _LOGGER.info("Updated legacy Bin Collection dashboard card resource")
+            return
+        await resources.async_create_item({"url": CARD_RESOURCE_URL, CONF_RESOURCE_TYPE_WS: "module"})
 
 
 async def _async_update_listener(hass: HomeAssistant, entry: BinCollectionConfigEntry) -> None:

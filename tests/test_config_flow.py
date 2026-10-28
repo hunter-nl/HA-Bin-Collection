@@ -30,8 +30,8 @@ def test_normalize_postcode_accepts_common_input() -> None:
 def test_config_entry_title_identifies_the_provider_and_address() -> None:
     """Each configured service has a distinct, recognizable title."""
     assert (
-        config_entry_title({"provider": "mijnafvalwijzer", "postcode": "3962KE", "house_number": "25", "addition": ""})
-        == "MijnAfvalwijzer - 3962KE 25"
+        config_entry_title({"provider": "mijnafvalwijzer", "postcode": "0000AA", "house_number": "0", "addition": ""})
+        == "MijnAfvalwijzer - 0000AA 0"
     )
 
 
