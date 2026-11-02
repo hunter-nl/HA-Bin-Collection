@@ -91,10 +91,12 @@ resources:
 
 New or changed collector notices and each scheduled reminder create a persistent Home Assistant notification. They also fire events, so users choose their own `notify` service rather than giving this integration device credentials:
 
-- `bin_collection.provider_notice`: `entry_id`, `title`, `body`
-- `bin_collection.collection_reminder`: `entry_id`, `date`, `waste_types`, `message`
+- `bin_collection.provider_notice`: `entry_id`, `service_name`, `title`, `body`
+- `bin_collection.collection_reminder`: `entry_id`, `service_name`, `date`, `waste_types`, `message`
 
-Example mobile notification automation:
+The persistent notification appears in Home Assistant. A mobile notification is sent separately by your automation, so enabling one produces both notifications. There is no destination group setting in Bin Collection; choose your phone or notification group in the automation's notification action.
+
+This example sends a mobile reminder with the same title and message as the persistent notification:
 
 ```yaml
 alias: Bin Collection reminder to phone
@@ -104,9 +106,11 @@ triggers:
 actions:
   - action: notify.mobile_app_my_phone
     data:
-      title: Bin Collection
+      title: "{{ trigger.event.data.service_name }}: Afvalherinnering"
       message: "{{ trigger.event.data.message }}"
 ```
+
+Replace `notify.mobile_app_my_phone` with your phone's notification action or an existing notification group. The `service_name` field contains the configured collection service name, so the title will be, for example, `ACV: Afvalherinnering`.
 
 ## Troubleshooting
 
